@@ -1,7 +1,6 @@
 
 package com.family.boardgames.controller;
 
-import com.family.boardgames.mapper.SessionMapper;
 import com.family.boardgames.model.dto.SessionDto;
 import com.family.boardgames.model.dto.StartSessionDto;
 import jakarta.validation.Valid;
@@ -23,7 +22,7 @@ import java.util.List;
 public class SessionController {
 
     private final SessionService sessionService;
-    private final SessionMapper sessionMapper;
+//    private final SessionMapper sessionMapper;
 
     @PostMapping("/start")
     public ResponseEntity<SessionDto> startSession(
@@ -32,7 +31,8 @@ public class SessionController {
         log.info("Starting new session for game: {}", startSessionDto.getGameId());
 
         GameSession savedSession = sessionService.startSession(startSessionDto);
-        SessionDto responseDto = sessionMapper.toDto(savedSession);
+//        SessionDto responseDto = sessionMapper.toDto(savedSession);
+        SessionDto responseDto = SessionDto.builder().build();
 
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
@@ -40,23 +40,24 @@ public class SessionController {
     @GetMapping("/{id}")
     public ResponseEntity<SessionDto> getSession(@PathVariable Long id) {
         GameSession session = sessionService.getSession(id);
-        SessionDto dto = sessionMapper.toDto(session);
+//        SessionDto dto = sessionMapper.toDto(session);
+        SessionDto dto = SessionDto.builder().build();
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping
-    public ResponseEntity<List<SessionDto>> getAllSessions() {
-        List<GameSession> sessions = sessionService.getAllSessions();
-        List<SessionDto> dtos = sessions.stream()
-                .map(sessionMapper::toDto)
-                .toList();
-        return ResponseEntity.ok(dtos);
-    }
+//    @GetMapping
+//    public ResponseEntity<List<SessionDto>> getAllSessions() {
+//        List<GameSession> sessions = sessionService.getAllSessions();
+//        List<SessionDto> dtos = sessions.stream()
+//                .map(sessionMapper::toDto)
+//                .toList();
+//        return ResponseEntity.ok();
+//    }
 
-    @PostMapping("/{id}/end")
-    public ResponseEntity<SessionDto> endSession(@PathVariable Long id) {
-        GameSession session = sessionService.endSession(id);
-        SessionDto dto = sessionMapper.toDto(session);
-        return ResponseEntity.ok(dto);
-    }
+//    @PostMapping("/{id}/end")
+//    public ResponseEntity<SessionDto> endSession(@PathVariable Long id) {
+//        GameSession session = sessionService.endSession(id);
+//        SessionDto dto = sessionMapper.toDto(session);
+//        return ResponseEntity.ok(dto);
+//    }
 }

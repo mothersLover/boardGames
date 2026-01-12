@@ -37,7 +37,7 @@ public class SessionService {
 
     public GameSession startSession(StartSessionDto startSessionDto) {
         String gameId = startSessionDto.getGameId();
-        Optional<Game> byNameContainingIgnoreCase = gameRepository.findByGameName(gameId);
+        Optional<Game> byNameContainingIgnoreCase = gameRepository.findByName(gameId);
         Game game = byNameContainingIgnoreCase.orElseThrow(() -> new RuntimeException("Game with name " + gameId + " not found"));
         GameSession build = GameSession.builder().
                 game(game).
