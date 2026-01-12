@@ -1,0 +1,32 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 32px;
+  background: white;
+  color: white;
+}
+
+.nav a {
+  margin-left: 20px;
+  text-decoration: none;
+  color: black;
+  opacity: 0.8;
+}
+
+.nav a.active {
+  opacity: 1;
+  border-bottom: 2px solid black;
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.2s;
+}
+
+.logo-link:hover {
+  opacity: 0.8;
+}
