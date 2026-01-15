@@ -50,11 +50,10 @@ public class GameSession {
     @Builder.Default
     private Boolean isCompleted = false;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "player_id", nullable = false)
+    @JoinColumn(name = "player_id")
     private Player winner;
-    
+
     @PrePersist
     protected void onCreate() {
         if (startedAt == null) {

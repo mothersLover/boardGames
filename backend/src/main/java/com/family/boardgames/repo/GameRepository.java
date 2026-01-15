@@ -15,7 +15,7 @@ public interface GameRepository extends JpaRepository<Game, Long> {
 
     List<Game> findByIsActiveTrue();
 
-    List<Game> findByNameContainingIgnoreCase(String name);
+    Optional<Game> findByNameContainingIgnoreCase(String name);
 
     Optional<Game> findByName(String gameName);
 
@@ -23,6 +23,11 @@ public interface GameRepository extends JpaRepository<Game, Long> {
 
     @Query("SELECT g FROM Game g JOIN g.tags t WHERE t.name = :tagName")
     List<Game> findByTagName(@Param("tagName") String tagName);
+
+    @Query("SELECT DISTINCT g FROM Game g " +
+            "JOIN g.tags t " +
+            "WHERE LOWER(t.name) LIKE LOWER(CONCAT('%', :tagName, '%'))")
+    List<Game> findByTagNameContaining(@Param("tagName") String tagName);
 
     Optional<Game> findByIdAndIsActiveTrue(Long id);
 }

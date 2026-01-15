@@ -1,24 +1,22 @@
 
 package com.family.boardgames.controller;
 
+import com.family.boardgames.model.GameSession;
 import com.family.boardgames.model.dto.SessionDto;
 import com.family.boardgames.model.dto.StartSessionDto;
+import com.family.boardgames.service.SessionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.family.boardgames.model.GameSession;
-import com.family.boardgames.service.SessionService;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/sessions")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:3000") // Для React dev сервера
+@CrossOrigin(origins = "*")  // Для React dev сервера
 public class SessionController {
 
     private final SessionService sessionService;

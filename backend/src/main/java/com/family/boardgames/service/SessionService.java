@@ -1,14 +1,13 @@
 
 package com.family.boardgames.service;
 
-import com.family.boardgames.model.Game;
-import com.family.boardgames.model.GameSession;
-import com.family.boardgames.model.Player;
+import com.family.boardgames.model.*;
 import com.family.boardgames.model.dto.PlayerDto;
 import com.family.boardgames.model.dto.StartSessionDto;
 import com.family.boardgames.repo.GameRepository;
 import com.family.boardgames.repo.GameSessionRepository;
 import com.family.boardgames.repo.PlayerRepository;
+import com.family.boardgames.repo.ScoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +25,7 @@ public class SessionService {
     private final GameSessionRepository sessionRepository;
     private final GameRepository gameRepository;
     private final PlayerRepository playerRepository;
+    private final ScoreRepository scoreRepository;
 
     public GameSession startSession(GameSession session) {
         // Можно добавить бизнес-логику:
@@ -37,14 +37,29 @@ public class SessionService {
 
     public GameSession startSession(StartSessionDto startSessionDto) {
         String gameId = startSessionDto.getGameId();
-        Optional<Game> byNameContainingIgnoreCase = gameRepository.findByName(gameId);
+        Optional<Game> byNameContainingIgnoreCase = gameRepository.findByNameContainingIgnoreCase(gameId);
         Game game = byNameContainingIgnoreCase.orElseThrow(() -> new RuntimeException("Game with name " + gameId + " not found"));
         GameSession build = GameSession.builder().
                 game(game).
                 notes(startSessionDto.getComment()).
                 startedAt(LocalDateTime.now()).build();
 
-        return sessionRepository.save(build);
+        GameSession gameSession = sessionRepository.save(build);
+        List<Score> scores = new ArrayList<>();
+        startSessionDto.getPlayers().forEach(player -> {
+            Optional<Player> byId = playerRepository.findById(player.getPlayerId());
+            if (byId.isPresent()) {
+                Player player1 = byId.get();
+                List<ScoreType> scoreTypes = game.getScoreTypes();
+                for (ScoreType scoreType : scoreTypes) {
+                    Score score = Score.builder().scoreType(scoreType).player(player1).session(gameSession).value(0D).build();
+                    Score saved = scoreRepository.save(score);
+                    scores.add(saved);
+                }
+            }
+        });
+        gameSession.setScores(scores);
+        return sessionRepository.save(gameSession);
     }
 
     @Transactional(readOnly = true)

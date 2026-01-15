@@ -73,23 +73,93 @@ public class Game {
     // Метод для получения пресетов очков
     public static List<ScoreType> getSevenWondersScoreTypes() {
         return List.of(
-                ScoreType.builder().name("Военные очки").displayOrder(1).weight(1.0).build(),
-                ScoreType.builder().name("Очки денег").displayOrder(2).weight(1.0).build(),
-                ScoreType.builder().name("Гражданские очки").displayOrder(3).weight(1.0).build(),
-                ScoreType.builder().name("Научные очки").displayOrder(4).weight(1.0).build(),
-                ScoreType.builder().name("Коммерческие очки").displayOrder(5).weight(1.0).build(),
-                ScoreType.builder().name("Очки гильдий").displayOrder(6).weight(1.0).build(),
-                ScoreType.builder().name("Очки чудес").displayOrder(7).weight(1.0).build()
+                ScoreType.builder()
+                        .name("Военные очки")
+                        .displayOrder(1)
+                        .weight(1.0)
+                        .description("Начисляются за победы в сражениях и военные успехи на игровом поле")
+                        .build(),
+
+                ScoreType.builder()
+                        .name("Очки денег")
+                        .displayOrder(2)
+                        .weight(1.0)
+                        .description("Начисляются за количество монет в конце игры (3 монеты = 1 очко)")
+                        .build(),
+
+                ScoreType.builder()
+                        .name("Гражданские очки")
+                        .displayOrder(3)
+                        .weight(1.0)
+                        .description("Начисляются за постройку гражданских зданий (зелёные карты)")
+                        .build(),
+
+                ScoreType.builder()
+                        .name("Научные очки")
+                        .displayOrder(4)
+                        .weight(1.0)
+                        .description("Начисляются за наборы научных символов и постройку научных зданий (синие карты)")
+                        .build(),
+
+                ScoreType.builder()
+                        .name("Коммерческие очки")
+                        .displayOrder(5)
+                        .weight(1.0)
+                        .description("Начисляются за постройку коммерческих зданий (жёлтые карты) и торговые успехи")
+                        .build(),
+
+                ScoreType.builder()
+                        .name("Очки гильдий")
+                        .displayOrder(6)
+                        .weight(1.0)
+                        .description("Начисляются за постройку гильдий (фиолетовые карты) в зависимости от стратегии игрока")
+                        .build(),
+
+                ScoreType.builder()
+                        .name("Очки чудес")
+                        .displayOrder(7)
+                        .weight(1.0)
+                        .description("Начисляются за завершение этапов чудес света, которые строит игрок")
+                        .build()
         );
     }
 
     public static List<ScoreType> getScytheScoreTypes() {
         return List.of(
-                ScoreType.builder().name("Популярность").displayOrder(1).weight(1.0).build(),
-                ScoreType.builder().name("Территории").displayOrder(2).weight(1.0).build(),
-                ScoreType.builder().name("Ресурсы").displayOrder(3).weight(1.0).build(),
-                ScoreType.builder().name("Строения").displayOrder(4).weight(1.0).build(),
-                ScoreType.builder().name("Монеты").displayOrder(5).weight(1.0).build()
+                ScoreType.builder()
+                        .name("Популярность")
+                        .displayOrder(1)
+                        .weight(1.0)
+                        .description("Очки начисляются за достижение определённых уровней популярности на треке популярности")
+                        .build(),
+
+                ScoreType.builder()
+                        .name("Территории")
+                        .displayOrder(2)
+                        .weight(1.0)
+                        .description("Очки начисляются за контроль территорий (полей, гор, тундры) и построенные на них здания")
+                        .build(),
+
+                ScoreType.builder()
+                        .name("Ресурсы")
+                        .displayOrder(3)
+                        .weight(1.0)
+                        .description("Очки начисляются за накопление ресурсов (пища, нефть, металл, дерево) в конце игры")
+                        .build(),
+
+                ScoreType.builder()
+                        .name("Строения")
+                        .displayOrder(4)
+                        .weight(1.0)
+                        .description("Очки начисляются за постройку различных зданий: добывающих, военных, инженерных и т.д.")
+                        .build(),
+
+                ScoreType.builder()
+                        .name("Монеты")
+                        .displayOrder(5)
+                        .weight(1.0)
+                        .description("Очки начисляются за оставшиеся монеты в конце игры (7 монет = 1 очко)")
+                        .build()
         );
     }
 
@@ -130,5 +200,12 @@ public class Game {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    @Override
+    public String toString() {
+        return "Game{" +
+                "name='" + name + '\'' +
+                '}';
     }
 }

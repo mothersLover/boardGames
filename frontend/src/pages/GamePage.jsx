@@ -16,12 +16,15 @@ const games = {
 export default function GamePage() {
   const { gameId } = useParams();
   const game = games[gameId];
-  const [players, setPlayers] = useState([""]);
+  const [players, setPlayers] = useState([{ name: "", playerId: null, isValid: false }]);
+  const [playerErrors, setPlayerErrors] = useState({});
   const [comment, setComment] = useState("");
   const [suggestions, setSuggestions] = useState({});
   const [loadingPlayers, setLoadingPlayers] = useState({});
-  const [searchTimeout, setSearchTimeout] = useState(null);
   const abortControllers = useRef({});
+
+  // Проверка, можно ли активировать кнопку "Начать игру"
+  const canStartGame = players.filter(p => p.isValid).length >= 2;
 
   // Функция для поиска игроков на сервере
   const searchPlayers = useCallback(async (index, query) => {
@@ -64,11 +67,19 @@ export default function GamePage() {
       }
 
       const playersData = await response.json();
-      
-      setSuggestions(prev => ({
-        ...prev,
-        [index]: playersData.slice(0, 5) // Ограничиваем 5 подсказками
-      }));
+
+      if (playersData.length === 0) {
+        // Если игрок не найден, не очищаем поле, но показываем сообщение
+        setSuggestions(prev => ({
+          ...prev,
+          [index]: []
+        }));
+      } else {
+        setSuggestions(prev => ({
+          ...prev,
+          [index]: playersData.slice(0, 5)
+        }));
+      }
     } catch (error) {
       if (error.name !== 'AbortError') {
         console.error("Error searching players:", error);
@@ -87,18 +98,59 @@ export default function GamePage() {
   const debouncedSearch = useCallback(
     debounce((index, value) => {
       searchPlayers(index, value);
-    }, 300), // Задержка 300ms
-    []
+    }, 300),
+    [searchPlayers]
   );
 
   const addPlayer = () => {
-    setPlayers([...players, ""]);
+    setPlayers([...players, { name: "", playerId: null, isValid: false }]);
+  };
+
+  const removePlayer = (index) => {
+    if (players.length <= 1) return;
+
+    // Отменяем запрос если есть
+    if (abortControllers.current[index]) {
+      abortControllers.current[index].abort();
+      delete abortControllers.current[index];
+    }
+
+    const updated = players.filter((_, i) => i !== index);
+    setPlayers(updated);
+
+    // Очищаем подсказки для этого индекса
+    setSuggestions(prev => {
+      const newSuggestions = { ...prev };
+      delete newSuggestions[index];
+      return newSuggestions;
+    });
   };
 
   const updatePlayer = (index, value) => {
     const updated = [...players];
-    updated[index] = value;
+    updated[index] = {
+      name: value,
+      playerId: null,
+      isValid: false
+    };
     setPlayers(updated);
+
+    // Сбрасываем ошибку при вводе
+    setPlayerErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[index];
+      return newErrors;
+    });
+
+    // Если поле очистили, удаляем подсказки
+    if (!value.trim()) {
+      setSuggestions(prev => {
+        const newSuggestions = { ...prev };
+        delete newSuggestions[index];
+        return newSuggestions;
+      });
+      return;
+    }
 
     // Запускаем поиск с debounce
     debouncedSearch(index, value);
@@ -106,15 +158,20 @@ export default function GamePage() {
 
   const selectSuggestion = (index, player) => {
     const updated = [...players];
-    updated[index] = player.displayName;
+    updated[index] = {
+      name: player.displayName,
+      playerId: player.id,
+      isValid: true
+    };
     setPlayers(updated);
-    
-    // Сохраняем playerId в data-атрибут или отдельное состояние
-    const input = document.querySelector(`input[data-index="${index}"]`);
-    if (input) {
-      input.dataset.playerId = player.id;
-    }
-    
+
+    // Сбрасываем ошибку
+    setPlayerErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[index];
+      return newErrors;
+    });
+
     // Убираем подсказки
     setSuggestions(prev => {
       const newSuggestions = { ...prev };
@@ -124,36 +181,94 @@ export default function GamePage() {
   };
 
   const handleInputBlur = (index) => {
-    // Даем время на клик по подсказке
-    setTimeout(() => {
-      setSuggestions(prev => {
-        const newSuggestions = { ...prev };
-        delete newSuggestions[index];
-        return newSuggestions;
-      });
-    }, 200);
-  };
+    const player = players[index];
 
-  const handleInputFocus = (index, value) => {
-    if (value.trim()) {
-      searchPlayers(index, value);
+    // Если пользователь ввел что-то, но не выбрал из подсказок
+    if (player.name.trim() && !player.playerId) {
+      // Даем немного времени для обработки клика по подсказке
+      setTimeout(() => {
+        // Проверяем, есть ли подсказки
+        if (suggestions[index] && suggestions[index].length === 0) {
+          // Игрок не найден - очищаем поле
+          const updated = [...players];
+          updated[index] = { name: "", playerId: null, isValid: false };
+          setPlayers(updated);
+
+          // Показываем сообщение об ошибке
+          setPlayerErrors(prev => ({
+            ...prev,
+            [index]: "Игрок не найден. Введите другое имя или выберите из списка."
+          }));
+        } else if (suggestions[index] && suggestions[index].length > 0) {
+          // Есть подсказки, но не выбрали - показываем ошибку
+          setPlayerErrors(prev => ({
+            ...prev,
+            [index]: "Выберите игрока из списка"
+          }));
+        }
+
+        // Убираем подсказки
+        setSuggestions(prev => {
+          const newSuggestions = { ...prev };
+          delete newSuggestions[index];
+          return newSuggestions;
+        });
+      }, 300);
+    } else {
+      // Убираем подсказки через небольшой таймаут
+      setTimeout(() => {
+        setSuggestions(prev => {
+          const newSuggestions = { ...prev };
+          delete newSuggestions[index];
+          return newSuggestions;
+        });
+      }, 200);
     }
   };
 
-  const startGame = async () => {
-    // Собираем данные игроков с ID
-    const playerInputs = document.querySelectorAll('.player-input[data-index]');
-    const playerData = [];
-    
-    playerInputs.forEach((input, index) => {
-      const value = input.value.trim();
-      if (value) {
-        playerData.push({
-          name: value,
-          playerId: input.dataset.playerId || null
-        });
+  const handleInputFocus = (index) => {
+    const player = players[index];
+    if (player.name.trim()) {
+      searchPlayers(index, player.name);
+    }
+  };
+
+  const validatePlayers = () => {
+    const errors = {};
+    let hasErrors = false;
+
+    players.forEach((player, index) => {
+      if (player.name.trim() && !player.playerId) {
+        errors[index] = "Игрок не найден. Пожалуйста, выберите игрока из списка.";
+        hasErrors = true;
       }
     });
+
+    setPlayerErrors(errors);
+    return !hasErrors;
+  };
+
+  const startGame = async () => {
+    // Валидация игроков
+    if (!validatePlayers()) {
+      alert("Пожалуйста, исправьте ошибки в полях игроков");
+      return;
+    }
+
+    // Проверка минимального количества игроков
+    const validPlayers = players.filter(p => p.isValid);
+    if (validPlayers.length < 2) {
+      alert("Для начала игры необходимо минимум 2 игрока");
+      return;
+    }
+
+    // Собираем данные валидных игроков
+    const playerData = players
+      .filter(p => p.isValid)
+      .map(p => ({
+        name: p.name,
+        playerId: p.playerId
+      }));
 
     const payload = {
       gameId,
@@ -168,6 +283,8 @@ export default function GamePage() {
         headers: {
           "Content-Type": "application/json",
         },
+        mode: 'cors',
+        credentials: 'include',
         body: JSON.stringify(payload)
       });
 
@@ -178,10 +295,10 @@ export default function GamePage() {
 
       const session = await response.json();
       console.log("Session started:", session);
-      
+
       // TODO: переход на экран партии
       // navigate(`/session/${session.id}`);
-      
+
     } catch (error) {
       alert(error.message || "Ошибка при старте игры");
     }
@@ -194,45 +311,57 @@ export default function GamePage() {
       Object.values(abortControllers.current).forEach(controller => {
         controller.abort();
       });
-      // Очищаем таймеры
-      if (searchTimeout) clearTimeout(searchTimeout);
     };
-  }, [searchTimeout]);
+  }, []);
 
   if (!game) return <h2>Игра не найдена</h2>;
 
   return (
     <>
-      <Header 
+      <Header
         logoSrc={game.logo}
         logoAlt="Логотип сайта"
       />
       <div className="page">
         <div className="container">
           <h2 style={{ marginBottom: 24 }}>Начать новую партию в {game.name}</h2>
-          
+
           <div className="players">
             {players.map((player, index) => (
               <div key={index} className="player-input-wrapper">
-                <input
-                  className="player-input"
-                  type="text"
-                  placeholder={`Имя игрока ${index + 1}`} 
-                  value={player}
-                  data-index={index}
-                  onChange={(e) => updatePlayer(index, e.target.value)}
-                  onFocus={() => handleInputFocus(index, player)}
-                  onBlur={() => handleInputBlur(index)}
-                />
-                
+                <div className="player-input-container">
+                  <input
+                    className={`player-input ${playerErrors[index] ? 'error' : ''} ${player.isValid ? 'valid' : ''}`}
+                    type="text"
+                    placeholder={`Имя игрока ${index + 1}`}
+                    value={player.name}
+                    onChange={(e) => updatePlayer(index, e.target.value)}
+                    onFocus={() => handleInputFocus(index)}
+                    onBlur={() => handleInputBlur(index)}
+                  />
+                  {players.length > 1 && (
+                    <button
+                      className="remove-player-btn"
+                      onClick={() => removePlayer(index)}
+                      type="button"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+
+                {playerErrors[index] && (
+                  <div className="error-message">{playerErrors[index]}</div>
+                )}
+
                 {loadingPlayers[index] && (
                   <div className="suggestions-dropdown">
-                    <div className="suggestion-item">
+                    <div className="suggestion-item loading">
                       <div className="loading-indicator">Поиск...</div>
                     </div>
                   </div>
                 )}
-                
+
                 {suggestions[index] && suggestions[index].length > 0 && (
                   <div className="suggestions-dropdown">
                     {suggestions[index].map((suggestion, idx) => (
@@ -240,11 +369,11 @@ export default function GamePage() {
                         key={idx}
                         className="suggestion-item"
                         onMouseDown={(e) => {
-                          e.preventDefault(); // Предотвращаем потерю фокуса
+                          e.preventDefault();
                           selectSuggestion(index, suggestion);
                         }}
                       >
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div className="suggestion-content">
                           <span className="suggestion-display">
                             {suggestion.displayName}
                           </span>
@@ -257,13 +386,11 @@ export default function GamePage() {
                     ))}
                   </div>
                 )}
-                
-                {suggestions[index] && suggestions[index].length === 0 && !loadingPlayers[index] && player.trim() && (
+
+                {suggestions[index] && suggestions[index].length === 0 && !loadingPlayers[index] && player.name.trim() && (
                   <div className="suggestions-dropdown">
-                    <div className="suggestion-item">
-                      <span style={{ color: '#666' }}>
-                        Игрок не найден. Будет создан новый.
-                      </span>
+                    <div className="suggestion-item no-results">
+                      <span>Игрок не найден. Введите другое имя.</span>
                     </div>
                   </div>
                 )}
@@ -271,173 +398,47 @@ export default function GamePage() {
             ))}
           </div>
 
-          <textarea
-            className="comment-input"
-            placeholder="Комментарий к партии (необязательно)"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            rows={3}
-          />
-
-          <div className="add-player" onClick={addPlayer}>
-            <div className="plus">+</div>
-            <div>Добавить ещё игрока</div>
+          <div className="add-player-container">
+            <button
+              className="add-player-button"
+              onClick={addPlayer}
+              type="button"
+            >
+              <span className="plus">+</span>
+              <span>Добавить ещё игрока</span>
+            </button>
           </div>
 
-          <button
-            onClick={startGame}
-            disabled={players.every(p => !p.trim())}
-            className="start-game-button"
-          >
-            Начать игру
-          </button>
+          <div className="comment-section">
+            <label htmlFor="comment" className="comment-label">
+              Комментарий к партии (необязательно)
+            </label>
+            <textarea
+              id="comment"
+              className="comment-input"
+              placeholder="Например: 'Играли с новыми правилами' и хохотали каждые 30 секунд"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <div className="start-button-container">
+            <button
+              onClick={startGame}
+              disabled={!canStartGame}
+              className={`start-game-button ${canStartGame ? 'enabled' : 'disabled'}`}
+            >
+              Начать игру
+              {!canStartGame && (
+                <span className="button-hint">
+                  (минимум 2 игрока)
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </>
   );
-}
-
-// Стили
-const styles = `
-  .player-input-wrapper {
-    position: relative;
-    margin-bottom: 12px;
-  }
-
-  .player-input, .comment-input {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e1e5e9;
-    border-radius: 10px;
-    font-size: 16px;
-    box-sizing: border-box;
-    transition: border-color 0.3s;
-    font-family: inherit;
-  }
-
-  .player-input:focus, .comment-input:focus {
-    outline: none;
-    border-color: #4a90e2;
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
-  }
-
-  .suggestions-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 2px solid #e1e5e9;
-    border-top: none;
-    border-radius: 0 0 10px 10px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-    z-index: 1000;
-    max-height: 250px;
-    overflow-y: auto;
-  }
-
-  .suggestion-item {
-    padding: 12px 16px;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background-color 0.2s;
-  }
-
-  .suggestion-item:hover {
-    background-color: #f8fafc;
-  }
-
-  .suggestion-item:last-child {
-    border-bottom: none;
-  }
-
-  .suggestion-display {
-    font-weight: 600;
-    color: #2d3748;
-    margin-bottom: 4px;
-  }
-
-  .suggestion-username {
-    color: #718096;
-    font-size: 14px;
-  }
-
-  .add-player {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    background-color: #f8fafc;
-    border: 2px dashed #cbd5e0;
-    border-radius: 10px;
-    cursor: pointer;
-    margin-top: 20px;
-    transition: all 0.3s;
-    color: #4a5568;
-  }
-
-  .add-player:hover {
-    background-color: #edf2f7;
-    border-color: #a0aec0;
-  }
-
-  .plus {
-    width: 28px;
-    height: 28px;
-    background-color: #4a90e2;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    font-weight: 300;
-  }
-
-  .start-game-button {
-    margin-top: 28px;
-    width: 100%;
-    padding: 16px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 18px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-    letter-spacing: 0.5px;
-  }
-
-  .start-game-button:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-  }
-
-  .start-game-button:disabled {
-    background: #cbd5e0;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  .loading-indicator {
-    padding: 8px;
-    text-align: center;
-    color: #718096;
-    font-size: 14px;
-  }
-
-  .comment-input {
-    margin-top: 20px;
-    resize: vertical;
-    min-height: 80px;
-  }
-`;
-
-// Добавляем стили
-if (!document.getElementById('game-page-styles')) {
-  const styleSheet = document.createElement('style');
-  styleSheet.id = 'game-page-styles';
-  styleSheet.textContent = styles;
-  document.head.appendChild(styleSheet);
 }

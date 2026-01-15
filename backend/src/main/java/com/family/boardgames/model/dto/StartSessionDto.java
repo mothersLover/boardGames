@@ -17,7 +17,7 @@ public class StartSessionDto {
     
     @NotEmpty(message = "At least one player is required")
     @Valid
-    private List<PlayerDto> players;
+    private List<MiniPlayerDto> players;
     
     @NotNull(message = "Start time is required")
     private LocalDateTime startedAt;
