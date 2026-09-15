@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
@@ -32,28 +33,40 @@ public class MinioService {
      */
     public String uploadFile(MultipartFile file, String folder) {
         try {
+            return uploadBytes(file.getBytes(), file.getOriginalFilename(), file.getContentType(), folder);
+        } catch (IOException e) {
+            log.error("Ошибка чтения загружаемого файла", e);
+            throw new RuntimeException("Failed to read uploaded file", e);
+        }
+    }
+
+    /**
+     * Загрузка произвольных байтов в MinIO (используется, например, при
+     * начальном заполнении данных из ресурсов бэкенда, где нет MultipartFile).
+     */
+    public String uploadBytes(byte[] data, String originalFilename, String contentType, String folder) {
+        try {
             // Проверяем существование бакета
             ensureBucketExists();
-            
+
             // Генерируем уникальное имя файла
-            String originalFilename = file.getOriginalFilename();
             String extension = getFileExtension(originalFilename);
             String filename = UUID.randomUUID() + extension;
             String objectPath = folder + "/" + filename;
-            
+
             // Загружаем файл
             minioClient.putObject(
                 PutObjectArgs.builder()
                     .bucket(bucketName)
                     .object(objectPath)
-                    .stream(file.getInputStream(), file.getSize(), -1)
-                    .contentType(file.getContentType())
+                    .stream(new ByteArrayInputStream(data), data.length, -1)
+                    .contentType(contentType)
                     .build()
             );
-            
+
             log.info("Файл {} успешно загружен в MinIO: {}", originalFilename, objectPath);
             return objectPath;
-            
+
         } catch (Exception e) {
             log.error("Ошибка загрузки файла в MinIO", e);
             throw new RuntimeException("Failed to upload file to MinIO", e);
@@ -97,8 +110,26 @@ public class MinioService {
             minioClient.makeBucket(MakeBucketArgs.builder()
                     .bucket(bucketName)
                     .build());
-            log.info("Бакет {} создан", bucketName);
+            // Новый бакет по умолчанию приватный — без публичной политики на
+            // чтение картинки логотипов не откроются напрямую по ссылке в <img>.
+            minioClient.setBucketPolicy(SetBucketPolicyArgs.builder()
+                    .bucket(bucketName)
+                    .config(publicReadPolicy(bucketName))
+                    .build());
+            log.info("Бакет {} создан с публичным доступом на чтение", bucketName);
         }
+    }
+
+    private String publicReadPolicy(String bucket) {
+        return "{"
+                + "\"Version\":\"2012-10-17\","
+                + "\"Statement\":[{"
+                + "\"Effect\":\"Allow\","
+                + "\"Principal\":{\"AWS\":[\"*\"]},"
+                + "\"Action\":[\"s3:GetObject\"],"
+                + "\"Resource\":[\"arn:aws:s3:::" + bucket + "/*\"]"
+                + "}]"
+                + "}";
     }
     
     /**

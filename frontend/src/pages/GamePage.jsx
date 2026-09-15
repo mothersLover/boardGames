@@ -2,20 +2,13 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import debounce from 'lodash.debounce'; // или напишем свою debounce
 import { useParams, Link } from "react-router-dom";
 import './GamePage.css';
-import logo7Wonders from '../resources/7.png';
-import logoChampions from '../resources/champions.png';
-import logoCythe from '../resources/scythe.png';
 import Header from "../components/Header";
-
-const games = {
-  "scythe" : { title: "Scythe", description: "Альтернативные 1920-е", logo: logoCythe },
-  "7wonders" : { title: "7 Wonders", description: "Строй цивилизацию", logo: logo7Wonders },
-  "champions" : { title: "Champions of Midgard", description: "Викинги!", logo: logoChampions }
-};
 
 export default function GamePage() {
   const { gameId } = useParams();
-  const game = games[gameId];
+  const [game, setGame] = useState(null);
+  const [gameLoading, setGameLoading] = useState(true);
+  const [gameError, setGameError] = useState(false);
   const [players, setPlayers] = useState([{ name: "", playerId: null, isValid: false }]);
   const [playerErrors, setPlayerErrors] = useState({});
   const [comment, setComment] = useState("");
@@ -314,12 +307,27 @@ export default function GamePage() {
     };
   }, []);
 
-  if (!game) return <h2>Игра не найдена</h2>;
+  // Загрузка данных игры по id из URL
+  useEffect(() => {
+    setGameLoading(true);
+    setGameError(false);
+    fetch(`http://localhost:8080/api/games/${gameId}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("Игра не найдена");
+        return r.json();
+      })
+      .then(setGame)
+      .catch(() => setGameError(true))
+      .finally(() => setGameLoading(false));
+  }, [gameId]);
+
+  if (gameLoading) return <h2>Загрузка...</h2>;
+  if (gameError || !game) return <h2>Игра не найдена</h2>;
 
   return (
     <>
       <Header
-        logoSrc={game.logo}
+        logoSrc={game.logoUrl}
         logoAlt="Логотип сайта"
       />
       <div className="page">

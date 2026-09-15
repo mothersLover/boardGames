@@ -16,10 +16,13 @@ export function logout() {
 
 async function request(path, options = {}) {
   const authHeader = getAuthHeader();
+  // Для FormData (загрузка файлов) Content-Type ставить нельзя — браузер сам
+  // добавит multipart/form-data с нужным boundary.
+  const isFormData = options.body instanceof FormData;
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(authHeader ? { Authorization: authHeader } : {}),
       ...(options.headers || {}),
     },
@@ -70,4 +73,5 @@ export const adminApi = {
   post: (path, body) => request(path, { method: "POST", body: JSON.stringify(body) }),
   put: (path, body) => request(path, { method: "PUT", body: JSON.stringify(body) }),
   del: (path) => request(path, { method: "DELETE" }),
+  upload: (path, formData) => request(path, { method: "POST", body: formData }),
 };

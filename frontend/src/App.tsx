@@ -11,6 +11,7 @@ import AdminLogin from "./admin/AdminLogin";
 import AdminLayout from "./admin/AdminLayout";
 import AdminGames from "./admin/AdminGames";
 import AdminPlayers from "./admin/AdminPlayers";
+import AdminNews from "./admin/AdminNews";
 import RequireAdmin from "./admin/RequireAdmin";
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
         <Route index element={<Navigate to="games" replace />} />
         <Route path="games" element={<AdminGames />} />
         <Route path="players" element={<AdminPlayers />} />
+        <Route path="news" element={<AdminNews />} />
       </Route>
     </Routes>
   );

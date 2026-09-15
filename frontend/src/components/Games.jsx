@@ -1,26 +1,40 @@
 
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import logo7Wonders from '../resources/7.png';
-import logoChampions from '../resources/champions.png';
-import logoCythe from '../resources/scythe.png';
+import logoPlaceholder from '../resources/logo.jpg';
 
 export default function Games() {
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("http://localhost:8080/api/games")
+      .then((r) => {
+        if (!r.ok) throw new Error("Не удалось загрузить список игр");
+        return r.json();
+      })
+      .then(setGames)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <section className="games"><p>Загрузка...</p></section>;
+  if (error) return <section className="games"><p>{error}</p></section>;
+  if (games.length === 0) return <section className="games"><p>Игры пока не добавлены</p></section>;
+
   return (
-        <section className="games">
-          <Link to="/game/7wonders" className="game small">
-            <img src={logo7Wonders} alt="7 Wonders" />
-            <span className="game-title">7 Wonders</span>
-          </Link>
-
-          <Link to="/game/champions" className="game small">
-            <img src={logoChampions} alt="Champions of Midgard" />
-            <span className="game-title">Champions of Midgard</span>
-          </Link>
-
-          <Link to="/game/scythe" className="game large">
-            <img src={logoCythe} alt="Scythe" />
-            <span className="game-title">Scythe</span>
-          </Link>
-        </section>
+    <section className="games">
+      {games.map((game, index) => (
+        <Link
+          to={`/game/${game.id}`}
+          className={`game ${index === games.length - 1 && games.length % 2 !== 0 ? "large" : "small"}`}
+          key={game.id}
+        >
+          <img src={game.logoUrl || logoPlaceholder} alt={game.name} />
+          <span className="game-title">{game.name}</span>
+        </Link>
+      ))}
+    </section>
   );
 }

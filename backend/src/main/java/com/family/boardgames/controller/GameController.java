@@ -19,7 +19,12 @@ public class GameController {
 
     @GetMapping
     public List<Game> all() {
-        return service.all();
+        return service.allActive();
+    }
+
+    @GetMapping("/{id}")
+    public Game getById(@PathVariable Long id) {
+        return service.getById(id);
     }
 
     @PostMapping

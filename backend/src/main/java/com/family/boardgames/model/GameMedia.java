@@ -68,6 +68,24 @@ public class GameMedia {
     @Builder.Default
     private List<String> otherPaths = new ArrayList<>();
 
+    // Готовые ссылки на файлы в MinIO — вычисляются сервисом при чтении,
+    // в БД не хранятся (persist-ится только *Paths — ключи объектов).
+    @Transient
+    @Builder.Default
+    private List<String> audioUrls = new ArrayList<>();
+
+    @Transient
+    @Builder.Default
+    private List<String> videoUrls = new ArrayList<>();
+
+    @Transient
+    @Builder.Default
+    private List<String> instructionUrls = new ArrayList<>();
+
+    @Transient
+    @Builder.Default
+    private List<String> otherUrls = new ArrayList<>();
+
     // Методы для удобной работы с путями
     public void addAudioPath(String path) {
         if (this.audioPaths == null) {
@@ -95,14 +113,6 @@ public class GameMedia {
             this.otherPaths = new ArrayList<>();
         }
         this.otherPaths.add(path);
-    }
-
-    // Методы для получения полных URL (если нужно)
-    public List<String> getAudioUrls(String baseUrl) {
-        if (audioPaths == null) return new ArrayList<>();
-        return audioPaths.stream()
-                .map(path -> baseUrl + "/api/media/" + path)
-                .toList();
     }
 
     @PrePersist

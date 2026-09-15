@@ -39,6 +39,74 @@ function toPayload(form) {
   };
 }
 
+const MEDIA_TYPES = [
+  { type: "AUDIO", label: "Аудио", pathsKey: "audioPaths", urlsKey: "audioUrls" },
+  { type: "VIDEO", label: "Видео", pathsKey: "videoPaths", urlsKey: "videoUrls" },
+  { type: "INSTRUCTION", label: "Инструкции", pathsKey: "instructionPaths", urlsKey: "instructionUrls" },
+  { type: "OTHER", label: "Другое", pathsKey: "otherPaths", urlsKey: "otherUrls" },
+];
+
+function fileNameOf(path) {
+  return path.split("/").pop();
+}
+
+function MediaTypeSection({
+  label,
+  paths,
+  urls,
+  disabled,
+  uploading,
+  pendingFile,
+  onSelectFile,
+  onClearPending,
+  onDelete,
+}) {
+  return (
+    <div className="admin-media-section">
+      <h4>{label}</h4>
+      <ul className="admin-media-list">
+        {paths.length === 0 && <li className="admin-media-empty">Файлов нет</li>}
+        {paths.map((path, i) => (
+          <li key={path}>
+            <a href={urls[i]} target="_blank" rel="noreferrer">{fileNameOf(path)}</a>
+            <button
+              type="button"
+              className="admin-btn danger"
+              disabled={disabled}
+              onClick={() => onDelete(path)}
+            >
+              Удалить
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {uploading ? (
+        <div className="admin-media-pending uploading">
+          Загрузка «{pendingFile?.name}»...
+        </div>
+      ) : pendingFile ? (
+        <div className="admin-media-pending">
+          <span>Выбран «{pendingFile.name}» — загрузится при сохранении</span>
+          <button type="button" className="admin-btn secondary" onClick={onClearPending}>
+            ✕
+          </button>
+        </div>
+      ) : (
+        <input
+          type="file"
+          disabled={disabled}
+          onChange={(e) => {
+            const file = e.target.files && e.target.files[0];
+            if (file) onSelectFile(file);
+            e.target.value = "";
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function AdminGames() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +115,12 @@ export default function AdminGames() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [editingGame, setEditingGame] = useState(null);
+  const [mediaBusy, setMediaBusy] = useState(false);
+  const [pendingMedia, setPendingMedia] = useState({});
+  const [uploadingType, setUploadingType] = useState(null);
 
   const loadGames = async () => {
     setLoading(true);
@@ -68,24 +142,66 @@ export default function AdminGames() {
   const startCreate = () => {
     setEditingId(null);
     setForm(emptyForm);
+    setLogoFile(null);
+    setLogoPreview(null);
+    setPendingMedia({});
     setShowForm(true);
   };
 
   const startEdit = (game) => {
     setEditingId(game.id);
+    setEditingGame(game);
     setForm(toFormValues(game));
+    setLogoFile(null);
+    setLogoPreview(game.logoUrl || null);
+    setPendingMedia({});
     setShowForm(true);
   };
 
   const cancelForm = () => {
     setShowForm(false);
     setEditingId(null);
+    setEditingGame(null);
     setForm(emptyForm);
+    setLogoFile(null);
+    setLogoPreview(null);
+    setPendingMedia({});
+    setUploadingType(null);
+  };
+
+  const handleSelectPendingMedia = (type, file) => {
+    setPendingMedia((prev) => ({ ...prev, [type]: file }));
+  };
+
+  const handleClearPendingMedia = (type) => {
+    setPendingMedia((prev) => ({ ...prev, [type]: null }));
+  };
+
+  const handleMediaDelete = async (type, path) => {
+    if (!window.confirm("Удалить файл?")) return;
+    setMediaBusy(true);
+    setError("");
+    try {
+      const updated = await adminApi.del(
+        `/games/${editingId}/media?type=${type}&path=${encodeURIComponent(path)}`
+      );
+      setEditingGame(updated);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setMediaBusy(false);
+    }
   };
 
   const handleChange = (field) => (e) => {
     const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    setLogoFile(file || null);
+    setLogoPreview(file ? URL.createObjectURL(file) : null);
   };
 
   const handleSubmit = async (e) => {
@@ -94,17 +210,41 @@ export default function AdminGames() {
     setError("");
     try {
       const payload = toPayload(form);
+      let gameId = editingId;
+
       if (editingId) {
         await adminApi.put(`/games/${editingId}`, payload);
       } else {
-        await adminApi.post("/games", payload);
+        const created = await adminApi.post("/games", payload);
+        gameId = created.id;
       }
+
+      if (logoFile && gameId) {
+        const formData = new FormData();
+        formData.append("file", logoFile);
+        await adminApi.upload(`/games/${gameId}/logo`, formData);
+      }
+
+      if (gameId) {
+        for (const { type } of MEDIA_TYPES) {
+          const file = pendingMedia[type];
+          if (!file) continue;
+          setUploadingType(type);
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("type", type);
+          await adminApi.upload(`/games/${gameId}/media`, formData);
+        }
+        setUploadingType(null);
+      }
+
       cancelForm();
       await loadGames();
     } catch (err) {
       setError(err.message);
     } finally {
       setSaving(false);
+      setUploadingType(null);
     }
   };
 
@@ -172,6 +312,35 @@ export default function AdminGames() {
             <input type="number" min="0" step="0.01" value={form.price} onChange={handleChange("price")} />
           </div>
 
+          <div className="admin-field">
+            <label>Логотип</label>
+            {logoPreview && (
+              <img src={logoPreview} alt="Логотип" className="admin-logo-preview" />
+            )}
+            <input type="file" accept="image/*" onChange={handleLogoChange} />
+          </div>
+
+          {editingId && (
+            <div className="admin-field">
+              <label>Медиа-файлы</label>
+              <small>Выберите файл — он загрузится в MinIO при нажатии «Сохранить»</small>
+              {MEDIA_TYPES.map(({ type, label, pathsKey, urlsKey }) => (
+                <MediaTypeSection
+                  key={type}
+                  label={label}
+                  paths={editingGame?.media?.[pathsKey] || []}
+                  urls={editingGame?.media?.[urlsKey] || []}
+                  disabled={mediaBusy || saving}
+                  uploading={uploadingType === type}
+                  pendingFile={pendingMedia[type]}
+                  onSelectFile={(file) => handleSelectPendingMedia(type, file)}
+                  onClearPending={() => handleClearPendingMedia(type)}
+                  onDelete={(path) => handleMediaDelete(type, path)}
+                />
+              ))}
+            </div>
+          )}
+
           <div className="admin-checkbox-field">
             <input
               id="isActive"
@@ -184,7 +353,7 @@ export default function AdminGames() {
 
           <div className="admin-form-actions">
             <button className="admin-btn" type="submit" disabled={saving}>
-              {saving ? "Сохранение..." : "Сохранить"}
+              {uploadingType ? "Загрузка файлов..." : saving ? "Сохранение..." : "Сохранить"}
             </button>
             <button className="admin-btn secondary" type="button" onClick={cancelForm}>
               Отмена
@@ -200,6 +369,7 @@ export default function AdminGames() {
           <thead>
             <tr>
               <th>ID</th>
+              <th>Лого</th>
               <th>Название</th>
               <th>Жанр</th>
               <th>Игроков</th>
@@ -213,6 +383,13 @@ export default function AdminGames() {
             {games.map((game) => (
               <tr key={game.id}>
                 <td>{game.id}</td>
+                <td>
+                  {game.logoUrl ? (
+                    <img src={game.logoUrl} alt={game.name} className="admin-logo-thumb" />
+                  ) : (
+                    "-"
+                  )}
+                </td>
                 <td>{game.name}</td>
                 <td>{game.genre}</td>
                 <td>

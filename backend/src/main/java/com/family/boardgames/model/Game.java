@@ -56,6 +56,14 @@ public class Game {
     @Builder.Default
     private Boolean isActive = true;
 
+    // Ключ объекта логотипа в MinIO (например "games/logos/<uuid>.png")
+    @Column(name = "logo_object_key", length = 500)
+    private String logoObjectKey;
+
+    // Готовая ссылка на логотип, вычисляется сервисом при чтении — в БД не хранится
+    @Transient
+    private String logoUrl;
+
     // Ссылка на медиа (One-to-One связь)
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "media_id", referencedColumnName = "id")
@@ -188,9 +196,6 @@ public class Game {
     // Метод для установки медиа
     public void setMedia(GameMedia media) {
         this.media = media;
-        if (media != null) {
-            media.setId(this.id);
-        }
     }
 
     @PrePersist

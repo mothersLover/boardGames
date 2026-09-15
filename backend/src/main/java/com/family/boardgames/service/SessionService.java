@@ -37,8 +37,14 @@ public class SessionService {
 
     public GameSession startSession(StartSessionDto startSessionDto) {
         String gameId = startSessionDto.getGameId();
-        Optional<Game> byNameContainingIgnoreCase = gameRepository.findByNameContainingIgnoreCase(gameId);
-        Game game = byNameContainingIgnoreCase.orElseThrow(() -> new RuntimeException("Game with name " + gameId + " not found"));
+        Long id;
+        try {
+            id = Long.valueOf(gameId);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Invalid game id: " + gameId);
+        }
+        Game game = gameRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Game not found with id: " + gameId));
         GameSession build = GameSession.builder().
                 game(game).
                 notes(startSessionDto.getComment()).

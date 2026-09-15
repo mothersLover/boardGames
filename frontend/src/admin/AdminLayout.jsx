@@ -17,6 +17,7 @@ export default function AdminLayout() {
         <nav className="admin-nav">
           <NavLink to="/admin/games">Игры</NavLink>
           <NavLink to="/admin/players">Игроки</NavLink>
+          <NavLink to="/admin/news">Новости</NavLink>
         </nav>
         <button className="admin-btn secondary" onClick={handleLogout}>
           Выйти
