@@ -4,6 +4,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import './index.css';
 import Home from "./pages/Home";
 import GamePage from "./pages/GamePage";
+import SessionResults from "./pages/SessionResults";
 import Multimedia from "./components/Multimedia";
 import Statistics from "./components/Statistics";
 import Rules from "./components/Rules";
@@ -22,6 +23,7 @@ function App() {
       <Route path="/game/:gameId/multimedia" element={<Multimedia />} />
       <Route path="/game/:gameId/statistics" element={<Statistics />} />
       <Route path="/game/:gameId/rules" element={<Rules />} />
+      <Route path="/session/:sessionId" element={<SessionResults />} />
 
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route

@@ -2,8 +2,7 @@
 package com.family.boardgames.service;
 
 import com.family.boardgames.model.*;
-import com.family.boardgames.model.dto.PlayerDto;
-import com.family.boardgames.model.dto.StartSessionDto;
+import com.family.boardgames.model.dto.*;
 import com.family.boardgames.repo.GameRepository;
 import com.family.boardgames.repo.GameSessionRepository;
 import com.family.boardgames.repo.PlayerRepository;
@@ -13,9 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,14 +24,7 @@ public class SessionService {
     private final GameRepository gameRepository;
     private final PlayerRepository playerRepository;
     private final ScoreRepository scoreRepository;
-
-    public GameSession startSession(GameSession session) {
-        // Можно добавить бизнес-логику:
-        // - Проверка существующей активной сессии
-        // - Валидация игры
-        // - Логирование
-        return sessionRepository.save(session);
-    }
+    private final MinioService minioService;
 
     public GameSession startSession(StartSessionDto startSessionDto) {
         String gameId = startSessionDto.getGameId();
@@ -75,8 +66,43 @@ public class SessionService {
     }
 
     @Transactional(readOnly = true)
+    public SessionDto getSessionDetail(Long id) {
+        return toDto(getSession(id));
+    }
+
+    @Transactional(readOnly = true)
     public List<GameSession> getAllSessions() {
         return sessionRepository.findAll();
+    }
+
+    public SessionDto saveResults(Long id, SaveResultsDto dto) {
+        GameSession session = getSession(id);
+
+        Map<Long, Score> scoresById = session.getScores().stream()
+                .collect(Collectors.toMap(Score::getId, s -> s));
+
+        for (ScoreUpdateDto update : dto.getScores()) {
+            Score score = scoresById.get(update.getScoreId());
+            if (score == null) {
+                throw new RuntimeException(
+                        "Score " + update.getScoreId() + " does not belong to session " + id);
+            }
+            double weight = score.getScoreType().getWeight() != null ? score.getScoreType().getWeight() : 1.0;
+            score.setValue(update.getValue());
+            // Считаем явно, не полагаясь на момент срабатывания @PreUpdate у Score,
+            // иначе итоги победителя ниже могли бы использовать ещё не обновлённое значение.
+            score.setCalculatedValue(update.getValue() * weight);
+        }
+
+        session.setNotes(dto.getComment());
+        session.setIsCompleted(true);
+        if (session.getEndedAt() == null) {
+            session.setEndedAt(LocalDateTime.now());
+        }
+        session.setWinner(determineWinner(session, dto.getWinnerId()));
+
+        GameSession saved = sessionRepository.save(session);
+        return toDto(saved);
     }
 
     public GameSession endSession(Long id) {
@@ -84,5 +110,88 @@ public class SessionService {
         session.setEndedAt(LocalDateTime.now());
         session.setIsCompleted(true);
         return sessionRepository.save(session);
+    }
+
+    private Player determineWinner(GameSession session, Long explicitWinnerId) {
+        if (explicitWinnerId != null) {
+            return playerRepository.findById(explicitWinnerId)
+                    .orElseThrow(() -> new RuntimeException("Player not found with id: " + explicitWinnerId));
+        }
+
+        Map<Long, Double> totals = new HashMap<>();
+        Map<Long, Player> playersById = new HashMap<>();
+        for (Score s : session.getScores()) {
+            Player p = s.getPlayer();
+            double val = s.getCalculatedValue() != null ? s.getCalculatedValue() : 0;
+            totals.merge(p.getId(), val, Double::sum);
+            playersById.put(p.getId(), p);
+        }
+
+        return totals.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(e -> playersById.get(e.getKey()))
+                .orElse(null);
+    }
+
+    private SessionDto toDto(GameSession session) {
+        Game game = session.getGame();
+
+        List<ScoreTypeDto> scoreTypeDtos = game.getScoreTypes().stream()
+                .sorted(Comparator.comparing(ScoreType::getDisplayOrder,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(st -> ScoreTypeDto.builder()
+                        .id(st.getId())
+                        .name(st.getName())
+                        .description(st.getDescription())
+                        .displayOrder(st.getDisplayOrder())
+                        .colorCode(st.getColorCode())
+                        .weight(st.getWeight())
+                        .build())
+                .toList();
+
+        List<Score> scores = session.getScores();
+
+        Map<Long, SessionPlayerDto> playerMap = new LinkedHashMap<>();
+        for (Score s : scores) {
+            Player p = s.getPlayer();
+            playerMap.putIfAbsent(p.getId(),
+                    SessionPlayerDto.builder().id(p.getId()).displayName(p.getDisplayName()).build());
+        }
+
+        List<ScoreDto> scoreDtos = scores.stream().map(s -> ScoreDto.builder()
+                        .id(s.getId())
+                        .sessionId(session.getId())
+                        .sessionName(session.getSessionName())
+                        .playerId(s.getPlayer().getId())
+                        .playerName(s.getPlayer().getDisplayName())
+                        .scoreTypeId(s.getScoreType().getId())
+                        .scoreTypeName(s.getScoreType().getName())
+                        .value(s.getValue())
+                        .calculatedValue(s.getCalculatedValue())
+                        .weight(s.getScoreType().getWeight())
+                        .notes(s.getNotes())
+                        .build())
+                .toList();
+
+        Player winner = session.getWinner();
+
+        return SessionDto.builder()
+                .id(session.getId())
+                .gameId(game.getId())
+                .gameName(game.getName())
+                .gameLogoUrl(game.getLogoObjectKey() != null && !game.getLogoObjectKey().isBlank()
+                        ? minioService.getFileUrl(game.getLogoObjectKey()) : null)
+                .sessionName(session.getSessionName())
+                .location(session.getLocation())
+                .comment(session.getNotes())
+                .startedAt(session.getStartedAt())
+                .endedAt(session.getEndedAt())
+                .isCompleted(session.getIsCompleted())
+                .winnerId(winner != null ? winner.getId() : null)
+                .winnerName(winner != null ? winner.getDisplayName() : null)
+                .scoreTypes(scoreTypeDtos)
+                .players(new ArrayList<>(playerMap.values()))
+                .scores(scoreDtos)
+                .build();
     }
 }

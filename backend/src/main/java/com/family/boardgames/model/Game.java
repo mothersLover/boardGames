@@ -64,8 +64,12 @@ public class Game {
     @Transient
     private String logoUrl;
 
-    // Ссылка на медиа (One-to-One связь)
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // Ссылка на медиа (One-to-One связь).
+    // EAGER осознанно: при LAZY Hibernate возвращает ByteBuddy-прокси, который
+    // Jackson не может сериализовать без отдельного модуля (jackson-datatype-hibernate) —
+    // именно так один раз всплыла ошибка "ByteBuddyInterceptor". Одна строка на игру
+    // не создаёт заметной нагрузки при текущих объёмах.
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "media_id", referencedColumnName = "id")
     private GameMedia media;
 

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import debounce from 'lodash.debounce'; // или напишем свою debounce
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import './GamePage.css';
 import Header from "../components/Header";
 
 export default function GamePage() {
   const { gameId } = useParams();
+  const navigate = useNavigate();
   const [game, setGame] = useState(null);
   const [gameLoading, setGameLoading] = useState(true);
   const [gameError, setGameError] = useState(false);
@@ -287,10 +288,7 @@ export default function GamePage() {
       }
 
       const session = await response.json();
-      console.log("Session started:", session);
-
-      // TODO: переход на экран партии
-      // navigate(`/session/${session.id}`);
+      navigate(`/session/${session.id}`);
 
     } catch (error) {
       alert(error.message || "Ошибка при старте игры");

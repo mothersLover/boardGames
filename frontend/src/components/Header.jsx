@@ -1,21 +1,18 @@
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useParams } from "react-router-dom";
 import "./Header.css";
 
 export default function Header({ logo = "🎲 BoardGames", logoSrc, logoAlt = "Logo" }) {
-  const location = useLocation();
   const navigate = useNavigate();
-  const currentPath = location.pathname; // получаем текущий путь
+  const { gameId } = useParams();
   const handleLogoClick = () => {
-    // Можно добавить дополнительную логику
-    console.log("Переход на главную");
     navigate("/");
   };
   return (
     <header className="header">
         <div className="logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
         {logoSrc ? (
-          <img 
-            src={logoSrc} 
+          <img
+            src={logoSrc}
             alt={logoAlt}
             className="logo-image"
           />
@@ -25,10 +22,10 @@ export default function Header({ logo = "🎲 BoardGames", logoSrc, logoAlt = "L
       </div>
 
       <nav className="nav">
-        <NavLink to="." end>Новая игра</NavLink>
-        <NavLink to="multimedia">Мультимедиа</NavLink>
-        <NavLink to="statistics">Статистика</NavLink>
-        <NavLink to="rules">Правила</NavLink>
+        <NavLink to={`/game/${gameId}`} end>Новая игра</NavLink>
+        <NavLink to={`/game/${gameId}/multimedia`}>Мультимедиа</NavLink>
+        <NavLink to={`/game/${gameId}/statistics`}>Статистика</NavLink>
+        <NavLink to={`/game/${gameId}/rules`}>Правила</NavLink>
       </nav>
     </header>
   );

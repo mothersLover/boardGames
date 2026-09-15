@@ -29,11 +29,13 @@ public class MinioService {
     private String minioPublicUrl;
     
     /**
-     * Загрузка файла в MinIO
+     * Загрузка файла в MinIO. Стримит напрямую из запроса, не буферизуя весь
+     * файл в памяти — важно для аудио/видео, которые могут быть большими.
      */
     public String uploadFile(MultipartFile file, String folder) {
         try {
-            return uploadBytes(file.getBytes(), file.getOriginalFilename(), file.getContentType(), folder);
+            return upload(file.getInputStream(), file.getSize(), file.getOriginalFilename(),
+                    file.getContentType(), folder);
         } catch (IOException e) {
             log.error("Ошибка чтения загружаемого файла", e);
             throw new RuntimeException("Failed to read uploaded file", e);
@@ -45,6 +47,11 @@ public class MinioService {
      * начальном заполнении данных из ресурсов бэкенда, где нет MultipartFile).
      */
     public String uploadBytes(byte[] data, String originalFilename, String contentType, String folder) {
+        return upload(new ByteArrayInputStream(data), data.length, originalFilename, contentType, folder);
+    }
+
+    private String upload(InputStream inputStream, long size, String originalFilename,
+                           String contentType, String folder) {
         try {
             // Проверяем существование бакета
             ensureBucketExists();
@@ -59,7 +66,7 @@ public class MinioService {
                 PutObjectArgs.builder()
                     .bucket(bucketName)
                     .object(objectPath)
-                    .stream(new ByteArrayInputStream(data), data.length, -1)
+                    .stream(inputStream, size, -1)
                     .contentType(contentType)
                     .build()
             );
