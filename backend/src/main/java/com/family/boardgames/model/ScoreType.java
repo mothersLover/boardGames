@@ -1,5 +1,6 @@
 package com.family.boardgames.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -39,6 +40,7 @@ public class ScoreType {
     @Builder.Default
     private Boolean isCumulative = true;
     
+    @JsonIgnore
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "game_id", nullable = false)

@@ -1,0 +1,175 @@
+.admin-login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #b49696;
+}
+
+.admin-login-card {
+  background: #fff;
+  padding: 32px;
+  border-radius: 8px;
+  width: 320px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.admin-login-card h2 {
+  margin-top: 0;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.admin-field label {
+  font-size: 14px;
+  color: #444;
+}
+
+.admin-field input,
+.admin-field select,
+.admin-field textarea {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.admin-error {
+  color: #b00020;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.admin-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #3a5a8c;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.admin-btn:hover {
+  background: #2d4670;
+}
+
+.admin-btn.danger {
+  background: #b00020;
+}
+
+.admin-btn.danger:hover {
+  background: #870018;
+}
+
+.admin-btn.secondary {
+  background: #888;
+}
+
+.admin-btn.secondary:hover {
+  background: #666;
+}
+
+.admin-btn:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
+
+.admin-layout {
+  min-height: 100vh;
+  background: #f2f2f2;
+}
+
+.admin-topbar {
+  background: #282c34;
+  color: #fff;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-topbar h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.admin-nav {
+  display: flex;
+  gap: 16px;
+}
+
+.admin-nav a {
+  color: #ccc;
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+.admin-nav a.active,
+.admin-nav a:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.admin-content {
+  padding: 24px;
+}
+
+.admin-content h2 {
+  margin-top: 0;
+}
+
+.admin-toolbar {
+  margin-bottom: 16px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.admin-table th {
+  background: #f7f7f7;
+}
+
+.admin-table .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-form-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  max-width: 480px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.admin-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}

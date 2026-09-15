@@ -1,5 +1,6 @@
 package com.family.boardgames.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,6 +51,7 @@ public class Player {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "player", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Score> scores = new ArrayList<>();

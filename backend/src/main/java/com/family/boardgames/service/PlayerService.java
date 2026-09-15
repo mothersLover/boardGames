@@ -50,4 +50,37 @@ public class PlayerService {
                 .map(playerMapper::toDto)
                 .collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public PlayerDto getPlayerById(Long id) {
+        Player player = playerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Player not found with id: " + id));
+        return playerMapper.toDto(player);
+    }
+
+    public PlayerDto createPlayer(PlayerDto dto) {
+        Player player = playerMapper.toEntity(dto);
+        player.setId(null);
+        return playerMapper.toDto(playerRepository.save(player));
+    }
+
+    public PlayerDto updatePlayer(Long id, PlayerDto dto) {
+        Player existing = playerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Player not found with id: " + id));
+        // Копируем только скалярные поля, не трогая коллекцию scores (cascade=ALL).
+        existing.setUsername(dto.getUserName());
+        existing.setDisplayName(dto.getDisplayName());
+        existing.setEmail(dto.getEmail());
+        existing.setRating(dto.getRating());
+        existing.setGamesPlayed(dto.getTotalGames());
+        existing.setGamesWon(dto.getWins());
+        return playerMapper.toDto(playerRepository.save(existing));
+    }
+
+    public void deletePlayer(Long id) {
+        if (!playerRepository.existsById(id)) {
+            throw new RuntimeException("Player not found with id: " + id);
+        }
+        playerRepository.deleteById(id);
+    }
 }

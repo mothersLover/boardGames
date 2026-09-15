@@ -96,4 +96,20 @@
           <optional>true</optional>
       </dependency>
   </dependencies>
+
+  <build>
+    <sourceDirectory>backend/src/main/java</sourceDirectory>
+    <testSourceDirectory>backend/src/test/java</testSourceDirectory>
+    <resources>
+      <resource>
+        <directory>backend/src/main/resources</directory>
+      </resource>
+    </resources>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 </project>

@@ -1,5 +1,6 @@
 package com.family.boardgames.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +27,7 @@ public class Tag {
     @Column(name = "description", length = 200)
     private String description;
     
+    @JsonIgnore
     @ManyToMany(mappedBy = "tags")
     @Builder.Default
     private Set<Game> games = new HashSet<>();

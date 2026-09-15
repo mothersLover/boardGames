@@ -1,6 +1,7 @@
 
 package com.family.boardgames.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -66,6 +67,7 @@ public class Game {
     private List<ScoreType> scoreTypes = new ArrayList<>();
 
     // Сессии этой игры
+    @JsonIgnore
     @OneToMany(mappedBy = "game", cascade = CascadeType.ALL)
     @Builder.Default
     private List<GameSession> sessions = new ArrayList<>();
