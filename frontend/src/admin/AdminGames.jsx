@@ -580,6 +580,8 @@ export default function AdminGames() {
               <th>Возраст</th>
               <th>Цена</th>
               <th>Активна</th>
+              <th>Сыграно</th>
+              <th>Незавершено</th>
               <th></th>
             </tr>
           </thead>
@@ -602,6 +604,8 @@ export default function AdminGames() {
                 <td>{game.ageRating ?? "-"}</td>
                 <td>{game.price ?? "-"}</td>
                 <td>{game.isActive ? "Да" : "Нет"}</td>
+                <td>{game.completedSessionsCount ?? 0}</td>
+                <td>{game.activeSessionsCount ?? 0}</td>
                 <td className="actions">
                   <button className="admin-btn" onClick={() => startEdit(game)}>
                     Изменить

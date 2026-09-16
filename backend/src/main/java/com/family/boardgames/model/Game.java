@@ -64,7 +64,13 @@ public class Game {
     @Transient
     private String logoUrl;
 
-    // Метод для установки медиа
+    // Счётчики партий — вычисляются сервисом при чтении, в БД не хранятся
+    @Transient
+    private Long completedSessionsCount;
+
+    @Transient
+    private Long activeSessionsCount;
+
     // Ссылка на медиа (One-to-One связь).
     // EAGER осознанно: при LAZY Hibernate возвращает ByteBuddy-прокси, который
     // Jackson не может сериализовать без отдельного модуля (jackson-datatype-hibernate) —

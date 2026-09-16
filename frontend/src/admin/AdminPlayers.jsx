@@ -7,8 +7,6 @@ const emptyForm = {
   displayName: "",
   email: "",
   rating: "",
-  totalGames: "",
-  wins: "",
 };
 
 function toFormValues(player) {
@@ -17,8 +15,6 @@ function toFormValues(player) {
     displayName: player.displayName || "",
     email: player.email || "",
     rating: player.rating ?? "",
-    totalGames: player.totalGames ?? "",
-    wins: player.wins ?? "",
   };
 }
 
@@ -28,8 +24,6 @@ function toPayload(form) {
     displayName: form.displayName,
     email: form.email,
     rating: form.rating === "" ? null : Number(form.rating),
-    totalGames: form.totalGames === "" ? null : Number(form.totalGames),
-    wins: form.wins === "" ? null : Number(form.wins),
   };
 }
 
@@ -148,16 +142,6 @@ export default function AdminPlayers() {
           <div className="admin-field">
             <label>Рейтинг</label>
             <input type="number" step="0.1" value={form.rating} onChange={handleChange("rating")} />
-          </div>
-
-          <div className="admin-field">
-            <label>Сыграно партий</label>
-            <input type="number" min="0" value={form.totalGames} onChange={handleChange("totalGames")} />
-          </div>
-
-          <div className="admin-field">
-            <label>Побед</label>
-            <input type="number" min="0" value={form.wins} onChange={handleChange("wins")} />
           </div>
 
           <div className="admin-form-actions">

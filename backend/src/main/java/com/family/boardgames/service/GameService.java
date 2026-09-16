@@ -10,6 +10,7 @@ import java.util.List;
 import com.family.boardgames.model.GameMedia;
 import com.family.boardgames.model.dto.FileUploadDto;
 import com.family.boardgames.repo.GameRepository;
+import com.family.boardgames.repo.GameSessionRepository;
 import com.family.boardgames.model.Game;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,10 +22,12 @@ public class GameService {
     private static final String LOGO_FOLDER = "games/logos";
 
     private final GameRepository repo;
+    private final GameSessionRepository sessionRepository;
     private final MinioService minioService;
 
-    public GameService(GameRepository repo, MinioService minioService) {
+    public GameService(GameRepository repo, GameSessionRepository sessionRepository, MinioService minioService) {
         this.repo = repo;
+        this.sessionRepository = sessionRepository;
         this.minioService = minioService;
     }
 
@@ -149,6 +152,9 @@ public class GameService {
         if (game.getLogoObjectKey() != null && !game.getLogoObjectKey().isBlank()) {
             game.setLogoUrl(minioService.getFileUrl(game.getLogoObjectKey()));
         }
+
+        game.setCompletedSessionsCount(sessionRepository.countByGame_IdAndIsCompletedTrue(game.getId()));
+        game.setActiveSessionsCount(sessionRepository.countByGame_IdAndIsCompletedFalse(game.getId()));
 
         GameMedia media = game.getMedia();
         if (media != null) {

@@ -330,7 +330,29 @@ export default function GamePage() {
       />
       <div className="page">
         <div className="container">
-          <h2 style={{ marginBottom: 24 }}>Начать новую партию в {game.name}</h2>
+          <div className="game-hero">
+            {game.logoUrl && (
+              <img src={game.logoUrl} alt={game.name} className="game-hero-logo" />
+            )}
+            <div className="game-hero-info">
+              <h2 className="game-hero-title">{game.name}</h2>
+              {game.description && <p className="game-hero-description">{game.description}</p>}
+              <div className="game-hero-badges">
+                <span className="game-badge">
+                  🎲 Сыграно партий: {game.completedSessionsCount ?? 0}
+                </span>
+                {game.genre && <span className="game-badge">{game.genre}</span>}
+                {(game.minPlayers || game.maxPlayers) && (
+                  <span className="game-badge">
+                    👥 {game.minPlayers ?? "?"}–{game.maxPlayers ?? "?"} игроков
+                  </span>
+                )}
+                {game.ageRating && <span className="game-badge">🔞 {game.ageRating}+</span>}
+              </div>
+            </div>
+          </div>
+
+          <h3 className="new-session-title">Начать новую партию</h3>
 
           <div className="players">
             {players.map((player, index) => (

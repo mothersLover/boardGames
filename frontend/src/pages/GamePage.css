@@ -91,6 +91,64 @@
   margin-bottom: 24px;
 }
 
+.game-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.game-hero-logo {
+  width: 88px;
+  height: 88px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.game-hero-info {
+  min-width: 0;
+}
+
+.game-hero-title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  color: #222;
+}
+
+.game-hero-description {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.game-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.game-badge {
+  display: inline-block;
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 14px;
+  background: #f0ecec;
+  color: #6b4f4f;
+  white-space: nowrap;
+}
+
+.new-session-title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  color: #555;
+  font-weight: 600;
+}
+
 .player-input-wrapper {
   position: relative;
   margin-bottom: 16px;
