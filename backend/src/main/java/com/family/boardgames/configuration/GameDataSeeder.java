@@ -1,7 +1,9 @@
 package com.family.boardgames.configuration;
 
 import com.family.boardgames.model.Game;
+import com.family.boardgames.model.ScoreType;
 import com.family.boardgames.repo.GameRepository;
+import com.family.boardgames.repo.ScoreTypeRepository;
 import com.family.boardgames.service.MinioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +14,9 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Заполняет базу тремя стартовыми играми при первом запуске (идемпотентно —
@@ -27,7 +32,25 @@ public class GameDataSeeder implements ApplicationRunner {
 
     private static final String LOGO_FOLDER = "games/logos";
 
+    // Цвета для типов очков, у которых colorCode ещё не заполнен (например,
+    // если строки в БД появились до того, как в билдерах Game появился цвет).
+    private static final Map<String, String> SCORE_TYPE_COLORS = Map.ofEntries(
+            Map.entry("Военные очки", "#c0392b"),
+            Map.entry("Очки денег", "#f1c40f"),
+            Map.entry("Гражданские очки", "#27ae60"),
+            Map.entry("Научные очки", "#2980b9"),
+            Map.entry("Коммерческие очки", "#e67e22"),
+            Map.entry("Очки гильдий", "#8e44ad"),
+            Map.entry("Очки чудес", "#16a085"),
+            Map.entry("Популярность", "#8e44ad"),
+            Map.entry("Территории", "#27ae60"),
+            Map.entry("Ресурсы", "#e67e22"),
+            Map.entry("Строения", "#2980b9"),
+            Map.entry("Монеты", "#f1c40f")
+    );
+
     private final GameRepository gameRepository;
+    private final ScoreTypeRepository scoreTypeRepository;
     private final MinioService minioService;
 
     @Override
@@ -58,6 +81,24 @@ public class GameDataSeeder implements ApplicationRunner {
                 2, 7, 10, 2800.0,
                 "seed/7wonders.png"
         );
+
+        backfillScoreTypeColors();
+    }
+
+    private void backfillScoreTypeColors() {
+        List<ScoreType> toFix = new ArrayList<>();
+        scoreTypeRepository.findAll().forEach(st -> {
+            boolean missingColor = st.getColorCode() == null || st.getColorCode().isBlank();
+            String color = SCORE_TYPE_COLORS.get(st.getName());
+            if (missingColor && color != null) {
+                st.setColorCode(color);
+                toFix.add(st);
+            }
+        });
+        if (!toFix.isEmpty()) {
+            scoreTypeRepository.saveAll(toFix);
+            log.info("Проставлены цвета по умолчанию для {} типов очков без colorCode", toFix.size());
+        }
     }
 
     private void seedGame(String lookupSubstring, String name, String description, String genre,

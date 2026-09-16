@@ -75,6 +75,33 @@ public class SessionService {
         return sessionRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
+    public List<SessionSummaryDto> getActiveSessions(Long gameId) {
+        return sessionRepository.findByGame_IdAndIsCompletedFalseOrderByStartedAtDesc(gameId).stream()
+                .map(this::toSummaryDto)
+                .toList();
+    }
+
+    private SessionSummaryDto toSummaryDto(GameSession session) {
+        List<String> playerNames = session.getScores().stream()
+                .map(s -> s.getPlayer().getDisplayName())
+                .distinct()
+                .toList();
+
+        Player winner = session.getWinner();
+
+        return SessionSummaryDto.builder()
+                .id(session.getId())
+                .sessionName(session.getSessionName())
+                .startedAt(session.getStartedAt())
+                .endedAt(session.getEndedAt())
+                .location(session.getLocation())
+                .isCompleted(session.getIsCompleted())
+                .playerNames(playerNames)
+                .winnerName(winner != null ? winner.getDisplayName() : null)
+                .build();
+    }
+
     public SessionDto saveResults(Long id, SaveResultsDto dto) {
         GameSession session = getSession(id);
 

@@ -4,6 +4,7 @@ package com.family.boardgames.controller;
 import com.family.boardgames.model.GameSession;
 import com.family.boardgames.model.dto.SaveResultsDto;
 import com.family.boardgames.model.dto.SessionDto;
+import com.family.boardgames.model.dto.SessionSummaryDto;
 import com.family.boardgames.model.dto.StartSessionDto;
 import com.family.boardgames.service.SessionService;
 import jakarta.validation.Valid;
@@ -12,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/sessions")
@@ -36,6 +39,11 @@ public class SessionController {
     @GetMapping("/{id}")
     public ResponseEntity<SessionDto> getSession(@PathVariable Long id) {
         return ResponseEntity.ok(sessionService.getSessionDetail(id));
+    }
+
+    @GetMapping("/active")
+    public List<SessionSummaryDto> getActiveSessions(@RequestParam Long gameId) {
+        return sessionService.getActiveSessions(gameId);
     }
 
     @PutMapping("/{id}/results")

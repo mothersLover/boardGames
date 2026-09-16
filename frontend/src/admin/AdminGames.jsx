@@ -107,6 +107,202 @@ function MediaTypeSection({
   );
 }
 
+const emptyScoreTypeForm = {
+  name: "",
+  description: "",
+  weight: "1",
+  displayOrder: "",
+  colorCode: "#4a90d9",
+};
+
+function scoreTypeToForm(st) {
+  return {
+    name: st.name || "",
+    description: st.description || "",
+    weight: st.weight ?? "1",
+    displayOrder: st.displayOrder ?? "",
+    colorCode: st.colorCode || "#4a90d9",
+  };
+}
+
+function scoreTypeToPayload(form) {
+  return {
+    name: form.name,
+    description: form.description,
+    weight: form.weight === "" ? 1 : Number(form.weight),
+    displayOrder: form.displayOrder === "" ? null : Number(form.displayOrder),
+    colorCode: form.colorCode,
+  };
+}
+
+function ScoreTypesManager({ gameId }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(emptyScoreTypeForm);
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await adminApi.get(`/games/${gameId}/score-types`);
+      setItems(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameId]);
+
+  const startCreate = () => {
+    setEditingId(null);
+    setForm(emptyScoreTypeForm);
+    setShowForm(true);
+  };
+
+  const startEdit = (st) => {
+    setEditingId(st.id);
+    setForm(scoreTypeToForm(st));
+    setShowForm(true);
+  };
+
+  const cancelForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(emptyScoreTypeForm);
+  };
+
+  const handleChange = (field) => (e) => {
+    const value = e.target.value;
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const payload = scoreTypeToPayload(form);
+      if (editingId) {
+        await adminApi.put(`/games/${gameId}/score-types/${editingId}`, payload);
+      } else {
+        await adminApi.post(`/games/${gameId}/score-types`, payload);
+      }
+      cancelForm();
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (st) => {
+    if (!window.confirm(`Удалить тип очков "${st.name}"?`)) return;
+    setError("");
+    try {
+      await adminApi.del(`/games/${gameId}/score-types/${st.id}`);
+      await load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div>
+      {error && <div className="admin-error">{error}</div>}
+
+      {loading ? (
+        <p>Загрузка...</p>
+      ) : (
+        <ul className="admin-media-list">
+          {items.length === 0 && <li className="admin-media-empty">Типов очков ещё нет</li>}
+          {items.map((st) => (
+            <li key={st.id}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    background: st.colorCode || "#ccc",
+                  }}
+                  aria-hidden="true"
+                />
+                {st.name}
+                <small style={{ color: "#999" }}>(вес {st.weight})</small>
+              </span>
+              <span className="admin-form-actions">
+                <button type="button" className="admin-btn" onClick={() => startEdit(st)}>
+                  Изменить
+                </button>
+                <button type="button" className="admin-btn danger" onClick={() => handleDelete(st)}>
+                  Удалить
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {!showForm && (
+        <button type="button" className="admin-btn" onClick={startCreate}>
+          Добавить тип очков
+        </button>
+      )}
+
+      {showForm && (
+        <div className="admin-form-card" style={{ marginTop: 10 }}>
+          <h4>{editingId ? "Редактировать тип очков" : "Новый тип очков"}</h4>
+
+          <div className="admin-field">
+            <label>Название</label>
+            <input value={form.name} onChange={handleChange("name")} required />
+          </div>
+
+          <div className="admin-field">
+            <label>Описание</label>
+            <textarea value={form.description} onChange={handleChange("description")} rows={2} />
+          </div>
+
+          <div className="admin-field">
+            <label>Вес (множитель очков)</label>
+            <input type="number" step="0.1" value={form.weight} onChange={handleChange("weight")} />
+          </div>
+
+          <div className="admin-field">
+            <label>Порядок отображения</label>
+            <input type="number" min="1" value={form.displayOrder} onChange={handleChange("displayOrder")} />
+          </div>
+
+          <div className="admin-field">
+            <label>Цвет</label>
+            <input type="color" value={form.colorCode} onChange={handleChange("colorCode")} style={{ width: 60, height: 36, padding: 2 }} />
+          </div>
+
+          <div className="admin-form-actions">
+            <button type="button" className="admin-btn" onClick={handleSubmit} disabled={saving}>
+              {saving ? "Сохранение..." : "Сохранить"}
+            </button>
+            <button type="button" className="admin-btn secondary" onClick={cancelForm}>
+              Отмена
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminGames() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -319,6 +515,14 @@ export default function AdminGames() {
             )}
             <input type="file" accept="image/*" onChange={handleLogoChange} />
           </div>
+
+          {editingId && (
+            <div className="admin-field">
+              <label>Типы очков</label>
+              <small>Определяют строки таблицы результатов и их цвет на странице партии</small>
+              <ScoreTypesManager gameId={editingId} />
+            </div>
+          )}
 
           {editingId && (
             <div className="admin-field">

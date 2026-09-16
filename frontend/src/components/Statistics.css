@@ -1,0 +1,152 @@
+.stats-page {
+  max-width: 800px !important;
+  text-align: left;
+  color: #222;
+}
+
+.stats-page h2 {
+  margin-top: 0;
+}
+
+.stats-empty {
+  color: #777;
+  font-style: italic;
+}
+
+.stats-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stats-metric-card {
+  background: #f7f5f5;
+  border-radius: 10px;
+  padding: 16px 18px;
+  text-align: center;
+}
+
+.stats-metric-value {
+  font-size: 28px;
+  font-weight: 600;
+  color: #3a5a8c;
+}
+
+.stats-metric-label {
+  font-size: 13px;
+  color: #777;
+  margin-top: 4px;
+}
+
+.stats-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stats-highlight-card {
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.stats-highlight-card.best {
+  background: #eaf7ed;
+  border-left: 4px solid #2e9e4a;
+}
+
+.stats-highlight-card.worst {
+  background: #fdecec;
+  border-left: 4px solid #c0392b;
+}
+
+.stats-highlight-title {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.stats-highlight-value {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.stats-highlight-meta {
+  font-size: 13px;
+  color: #777;
+  margin-top: 4px;
+}
+
+.stats-section {
+  margin-bottom: 28px;
+}
+
+.stats-section h3 {
+  font-size: 17px;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #b49696;
+  padding-bottom: 6px;
+}
+
+.stats-leaderboard {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.stats-leaderboard th,
+.stats-leaderboard td {
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.stats-leaderboard th:first-child,
+.stats-leaderboard td:first-child {
+  text-align: left;
+}
+
+.stats-leaderboard thead th {
+  color: #777;
+  font-weight: 500;
+  font-size: 13px;
+  border-bottom: 1px solid #eee;
+}
+
+.stats-leaderboard tbody tr:nth-child(odd) {
+  background: #f9f8f8;
+}
+
+.stats-rank {
+  display: inline-block;
+  width: 22px;
+}
+
+.stats-score-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.stats-score-type-card {
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #f7f5f5;
+  border-left: 4px solid #b49696;
+}
+
+.stats-score-type-name {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.stats-score-type-value {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.stats-score-type-player {
+  font-size: 13px;
+  color: #777;
+}

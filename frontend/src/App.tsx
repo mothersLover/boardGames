@@ -8,6 +8,7 @@ import SessionResults from "./pages/SessionResults";
 import Multimedia from "./components/Multimedia";
 import Statistics from "./components/Statistics";
 import Rules from "./components/Rules";
+import ActiveSessions from "./components/ActiveSessions";
 import AdminLogin from "./admin/AdminLogin";
 import AdminLayout from "./admin/AdminLayout";
 import AdminGames from "./admin/AdminGames";
@@ -20,6 +21,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/game/:gameId" element={<GamePage />} />
+      <Route path="/game/:gameId/sessions" element={<ActiveSessions />} />
       <Route path="/game/:gameId/multimedia" element={<Multimedia />} />
       <Route path="/game/:gameId/statistics" element={<Statistics />} />
       <Route path="/game/:gameId/rules" element={<Rules />} />

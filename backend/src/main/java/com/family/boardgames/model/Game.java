@@ -64,6 +64,7 @@ public class Game {
     @Transient
     private String logoUrl;
 
+    // Метод для установки медиа
     // Ссылка на медиа (One-to-One связь).
     // EAGER осознанно: при LAZY Hibernate возвращает ByteBuddy-прокси, который
     // Jackson не может сериализовать без отдельного модуля (jackson-datatype-hibernate) —
@@ -91,6 +92,7 @@ public class Game {
                         .name("Военные очки")
                         .displayOrder(1)
                         .weight(1.0)
+                        .colorCode("#c0392b")
                         .description("Начисляются за победы в сражениях и военные успехи на игровом поле")
                         .build(),
 
@@ -98,6 +100,7 @@ public class Game {
                         .name("Очки денег")
                         .displayOrder(2)
                         .weight(1.0)
+                        .colorCode("#f1c40f")
                         .description("Начисляются за количество монет в конце игры (3 монеты = 1 очко)")
                         .build(),
 
@@ -105,6 +108,7 @@ public class Game {
                         .name("Гражданские очки")
                         .displayOrder(3)
                         .weight(1.0)
+                        .colorCode("#27ae60")
                         .description("Начисляются за постройку гражданских зданий (зелёные карты)")
                         .build(),
 
@@ -112,6 +116,7 @@ public class Game {
                         .name("Научные очки")
                         .displayOrder(4)
                         .weight(1.0)
+                        .colorCode("#2980b9")
                         .description("Начисляются за наборы научных символов и постройку научных зданий (синие карты)")
                         .build(),
 
@@ -119,6 +124,7 @@ public class Game {
                         .name("Коммерческие очки")
                         .displayOrder(5)
                         .weight(1.0)
+                        .colorCode("#e67e22")
                         .description("Начисляются за постройку коммерческих зданий (жёлтые карты) и торговые успехи")
                         .build(),
 
@@ -126,6 +132,7 @@ public class Game {
                         .name("Очки гильдий")
                         .displayOrder(6)
                         .weight(1.0)
+                        .colorCode("#8e44ad")
                         .description("Начисляются за постройку гильдий (фиолетовые карты) в зависимости от стратегии игрока")
                         .build(),
 
@@ -133,6 +140,7 @@ public class Game {
                         .name("Очки чудес")
                         .displayOrder(7)
                         .weight(1.0)
+                        .colorCode("#16a085")
                         .description("Начисляются за завершение этапов чудес света, которые строит игрок")
                         .build()
         );
@@ -144,6 +152,7 @@ public class Game {
                         .name("Популярность")
                         .displayOrder(1)
                         .weight(1.0)
+                        .colorCode("#8e44ad")
                         .description("Очки начисляются за достижение определённых уровней популярности на треке популярности")
                         .build(),
 
@@ -151,6 +160,7 @@ public class Game {
                         .name("Территории")
                         .displayOrder(2)
                         .weight(1.0)
+                        .colorCode("#27ae60")
                         .description("Очки начисляются за контроль территорий (полей, гор, тундры) и построенные на них здания")
                         .build(),
 
@@ -158,6 +168,7 @@ public class Game {
                         .name("Ресурсы")
                         .displayOrder(3)
                         .weight(1.0)
+                        .colorCode("#e67e22")
                         .description("Очки начисляются за накопление ресурсов (пища, нефть, металл, дерево) в конце игры")
                         .build(),
 
@@ -165,6 +176,7 @@ public class Game {
                         .name("Строения")
                         .displayOrder(4)
                         .weight(1.0)
+                        .colorCode("#2980b9")
                         .description("Очки начисляются за постройку различных зданий: добывающих, военных, инженерных и т.д.")
                         .build(),
 
@@ -172,6 +184,7 @@ public class Game {
                         .name("Монеты")
                         .displayOrder(5)
                         .weight(1.0)
+                        .colorCode("#f1c40f")
                         .description("Очки начисляются за оставшиеся монеты в конце игры (7 монет = 1 очко)")
                         .build()
         );
@@ -196,11 +209,6 @@ public class Game {
     @Column(name = "version")
     @Version
     private Long version;
-
-    // Метод для установки медиа
-    public void setMedia(GameMedia media) {
-        this.media = media;
-    }
 
     @PrePersist
     protected void onCreate() {

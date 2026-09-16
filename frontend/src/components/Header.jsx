@@ -23,6 +23,7 @@ export default function Header({ logo = "🎲 BoardGames", logoSrc, logoAlt = "L
 
       <nav className="nav">
         <NavLink to={`/game/${gameId}`} end>Новая игра</NavLink>
+        <NavLink to={`/game/${gameId}/sessions`}>Активные сессии</NavLink>
         <NavLink to={`/game/${gameId}/multimedia`}>Мультимедиа</NavLink>
         <NavLink to={`/game/${gameId}/statistics`}>Статистика</NavLink>
         <NavLink to={`/game/${gameId}/rules`}>Правила</NavLink>
