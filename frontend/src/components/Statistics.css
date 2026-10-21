@@ -150,3 +150,68 @@
   font-size: 13px;
   color: #777;
 }
+
+.stats-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.stats-history-table th,
+.stats-history-table td {
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.stats-history-table thead th {
+  color: #777;
+  font-weight: 500;
+  font-size: 13px;
+  border-bottom: 1px solid #eee;
+}
+
+.stats-history-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.stats-history-row:nth-child(odd) {
+  background: #f9f8f8;
+}
+
+.stats-history-row:hover {
+  background: #f0ecec;
+}
+
+.stats-history-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.stats-page-btn {
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #333;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.stats-page-btn:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.stats-page-btn.active {
+  background: #b49696;
+  color: #fff;
+  border-color: #b49696;
+}
+
+.stats-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

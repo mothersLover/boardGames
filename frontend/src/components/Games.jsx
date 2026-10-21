@@ -1,3 +1,4 @@
+import { API_URL } from "../config";
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -9,7 +10,7 @@ export default function Games() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/games")
+    fetch(`${API_URL}/api/games`)
       .then((r) => {
         if (!r.ok) throw new Error("Не удалось загрузить список игр");
         return r.json();

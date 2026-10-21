@@ -1,6 +1,7 @@
 
 package com.family.boardgames.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -24,9 +25,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails admin = User.withUsername("admin")
-                .password(passwordEncoder.encode("admin"))
+    public UserDetailsService userDetailsService(
+            PasswordEncoder passwordEncoder,
+            @Value("${app.admin.username:admin}") String adminUsername,
+            @Value("${app.admin.password:admin}") String adminPassword) {
+        UserDetails admin = User.withUsername(adminUsername)
+                .password(passwordEncoder.encode(adminPassword))
                 .roles("ADMIN")
                 .build();
         return new InMemoryUserDetailsManager(admin);

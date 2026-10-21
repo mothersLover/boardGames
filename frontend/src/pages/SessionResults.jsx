@@ -1,3 +1,4 @@
+import { API_URL } from "../config";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import "./SessionResults.css";
@@ -24,7 +25,7 @@ export default function SessionResults() {
   const loadSession = () => {
     setLoading(true);
     setError("");
-    fetch(`http://localhost:8080/api/sessions/${sessionId}`)
+    fetch(`${API_URL}/api/sessions/${sessionId}`)
       .then((r) => {
         if (!r.ok) throw new Error("Партия не найдена");
         return r.json();
@@ -99,7 +100,7 @@ export default function SessionResults() {
       };
 
       const response = await fetch(
-        `http://localhost:8080/api/sessions/${sessionId}/results`,
+        `${API_URL}/api/sessions/${sessionId}/results`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -144,6 +145,8 @@ export default function SessionResults() {
       </div>
     );
   }
+
+  const readOnly = !!session.isCompleted;
 
   return (
     <div className="page">
@@ -198,6 +201,7 @@ export default function SessionResults() {
                           type="number"
                           value={values[score.id] ?? 0}
                           onChange={(e) => handleValueChange(score.id, e.target.value)}
+                          disabled={readOnly}
                         />
                       </td>
                     );
@@ -232,15 +236,18 @@ export default function SessionResults() {
               setSaved(false);
             }}
             placeholder="Например: играли с новыми правилами, было очень напряжённо"
+            disabled={readOnly}
           />
         </div>
 
-        <div className="results-actions">
-          <button className="results-save-btn" onClick={handleSave} disabled={saving}>
-            {saving ? "Сохранение..." : "Сохранить результаты"}
-          </button>
-          {saved && <span className="results-saved-note">✓ Сохранено</span>}
-        </div>
+        {!readOnly && (
+          <div className="results-actions">
+            <button className="results-save-btn" onClick={handleSave} disabled={saving}>
+              {saving ? "Сохранение..." : "Сохранить результаты"}
+            </button>
+            {saved && <span className="results-saved-note">✓ Сохранено</span>}
+          </div>
+        )}
       </div>
     </div>
   );

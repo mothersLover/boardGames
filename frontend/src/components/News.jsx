@@ -1,3 +1,4 @@
+import { API_URL } from "../config";
 import { useEffect, useState } from "react";
 import "./News.css";
 
@@ -25,7 +26,7 @@ export default function News() {
   useEffect(() => {
     setLoading(true);
     setError("");
-    fetch(`http://localhost:8080/api/news?page=${page}&size=${PAGE_SIZE}`)
+    fetch(`${API_URL}/api/news?page=${page}&size=${PAGE_SIZE}`)
       .then((r) => {
         if (!r.ok) throw new Error("Не удалось загрузить новости");
         return r.json();

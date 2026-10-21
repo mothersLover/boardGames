@@ -1,3 +1,4 @@
+import { API_URL } from "../config";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Header from "./Header";
@@ -17,7 +18,7 @@ export default function Multimedia() {
   useEffect(() => {
     setLoading(true);
     setError(false);
-    fetch(`http://localhost:8080/api/games/${gameId}`)
+    fetch(`${API_URL}/api/games/${gameId}`)
       .then((r) => {
         if (!r.ok) throw new Error("Игра не найдена");
         return r.json();
@@ -29,21 +30,27 @@ export default function Multimedia() {
 
   if (loading) {
     return (
-      <div className="page">
-        <div className="container multimedia-page">
-          <p>Загрузка...</p>
+      <>
+        <Header />
+        <div className="page">
+          <div className="container multimedia-page">
+            <p>Загрузка...</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (error || !game) {
     return (
-      <div className="page">
-        <div className="container multimedia-page">
-          <h2>Игра не найдена</h2>
+      <>
+        <Header />
+        <div className="page">
+          <div className="container multimedia-page">
+            <h2>Игра не найдена</h2>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 

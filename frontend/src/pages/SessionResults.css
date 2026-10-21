@@ -110,6 +110,14 @@
   border-color: #3a5a8c;
 }
 
+.results-table input[type="number"]:disabled,
+.results-comment textarea:disabled {
+  background: #f2f2f2;
+  color: #777;
+  border-color: #eee;
+  cursor: not-allowed;
+}
+
 .results-total-row td {
   border-top: 2px solid #ddd;
   font-weight: 500;

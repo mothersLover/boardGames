@@ -1,3 +1,4 @@
+import { API_URL } from "../config";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import debounce from 'lodash.debounce'; // или напишем свою debounce
 import { useParams, Link, useNavigate } from "react-router-dom";
@@ -44,7 +45,7 @@ export default function GamePage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/players/search?query=${encodeURIComponent(query)}`,
+        `${API_URL}/api/players/search?query=${encodeURIComponent(query)}`,
         {
           method: "GET",
           headers: {
@@ -272,7 +273,7 @@ export default function GamePage() {
     };
 
     try {
-      const response = await fetch("http://localhost:8080/api/sessions/start", {
+      const response = await fetch(`${API_URL}/api/sessions/start`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -309,7 +310,7 @@ export default function GamePage() {
   useEffect(() => {
     setGameLoading(true);
     setGameError(false);
-    fetch(`http://localhost:8080/api/games/${gameId}`)
+    fetch(`${API_URL}/api/games/${gameId}`)
       .then((r) => {
         if (!r.ok) throw new Error("Игра не найдена");
         return r.json();
@@ -319,8 +320,31 @@ export default function GamePage() {
       .finally(() => setGameLoading(false));
   }, [gameId]);
 
-  if (gameLoading) return <h2>Загрузка...</h2>;
-  if (gameError || !game) return <h2>Игра не найдена</h2>;
+  if (gameLoading) {
+    return (
+      <>
+        <Header />
+        <div className="page">
+          <div className="container">
+            <p>Загрузка...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (gameError || !game) {
+    return (
+      <>
+        <Header />
+        <div className="page">
+          <div className="container">
+            <h2>Игра не найдена</h2>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

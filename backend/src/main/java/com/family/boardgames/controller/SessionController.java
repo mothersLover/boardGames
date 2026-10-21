@@ -4,6 +4,7 @@ package com.family.boardgames.controller;
 import com.family.boardgames.model.GameSession;
 import com.family.boardgames.model.dto.SaveResultsDto;
 import com.family.boardgames.model.dto.SessionDto;
+import com.family.boardgames.model.dto.SessionHistoryPageDto;
 import com.family.boardgames.model.dto.SessionSummaryDto;
 import com.family.boardgames.model.dto.StartSessionDto;
 import com.family.boardgames.service.SessionService;
@@ -44,6 +45,14 @@ public class SessionController {
     @GetMapping("/active")
     public List<SessionSummaryDto> getActiveSessions(@RequestParam Long gameId) {
         return sessionService.getActiveSessions(gameId);
+    }
+
+    @GetMapping("/history")
+    public SessionHistoryPageDto getHistory(
+            @RequestParam Long gameId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return sessionService.getSessionHistory(gameId, page, size);
     }
 
     @PutMapping("/{id}/results")

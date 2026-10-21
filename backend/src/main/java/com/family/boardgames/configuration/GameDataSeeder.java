@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Заполняет базу тремя стартовыми играми при первом запуске (идемпотентно —
@@ -82,7 +83,25 @@ public class GameDataSeeder implements ApplicationRunner {
                 "seed/7wonders.png"
         );
 
+        // Для Champions of Midgard готового набора нет — типы очков добавляются через админку.
+        seedScoreTypesIfMissing("Scythe", Game::getScytheScoreTypes);
+        seedScoreTypesIfMissing("7 Wonders", Game::getSevenWondersScoreTypes);
+
         backfillScoreTypeColors();
+    }
+
+    // Без типов очков у партии нет строк в таблице результатов, поэтому на чистой
+    // установке (например, новый сервер) их нужно создать вместе с играми.
+    private void seedScoreTypesIfMissing(String lookupSubstring, Supplier<List<ScoreType>> preset) {
+        gameRepository.findByNameContainingIgnoreCase(lookupSubstring).ifPresent(game -> {
+            if (scoreTypeRepository.existsByGame_Id(game.getId())) {
+                return;
+            }
+            List<ScoreType> scoreTypes = preset.get();
+            scoreTypes.forEach(st -> st.setGame(game));
+            scoreTypeRepository.saveAll(scoreTypes);
+            log.info("Для игры '{}' созданы типы очков: {}", game.getName(), scoreTypes.size());
+        });
     }
 
     private void backfillScoreTypeColors() {

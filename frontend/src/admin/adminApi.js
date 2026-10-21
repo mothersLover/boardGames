@@ -1,4 +1,6 @@
-const BASE_URL = "http://localhost:8080/api/admin";
+import { API_URL } from "../config";
+
+const BASE_URL = `${API_URL}/api/admin`;
 const STORAGE_KEY = "admin_auth";
 
 function getAuthHeader() {

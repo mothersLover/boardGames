@@ -8,6 +8,8 @@ import com.family.boardgames.repo.GameSessionRepository;
 import com.family.boardgames.repo.PlayerRepository;
 import com.family.boardgames.repo.ScoreRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,6 +82,40 @@ public class SessionService {
         return sessionRepository.findByGame_IdAndIsCompletedFalseOrderByStartedAtDesc(gameId).stream()
                 .map(this::toSummaryDto)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public SessionHistoryPageDto getSessionHistory(Long gameId, int page, int size) {
+        Page<GameSession> result = sessionRepository.findByGame_IdAndIsCompletedTrueOrderByStartedAtDesc(
+                gameId, PageRequest.of(page, size));
+        return toHistoryPage(result);
+    }
+
+    @Transactional(readOnly = true)
+    public SessionHistoryPageDto getAdminSessionHistory(Long gameId, int page, int size) {
+        Page<GameSession> result = sessionRepository.findByGame_IdOrderByStartedAtDesc(
+                gameId, PageRequest.of(page, size));
+        return toHistoryPage(result);
+    }
+
+    public void deleteSession(Long gameId, Long sessionId) {
+        GameSession session = getSession(sessionId);
+        if (!session.getGame().getId().equals(gameId)) {
+            throw new RuntimeException("Session " + sessionId + " does not belong to game " + gameId);
+        }
+        sessionRepository.delete(session);
+    }
+
+    private SessionHistoryPageDto toHistoryPage(Page<GameSession> result) {
+        List<SessionSummaryDto> content = result.getContent().stream()
+                .map(this::toSummaryDto)
+                .toList();
+        return SessionHistoryPageDto.builder()
+                .content(content)
+                .page(result.getNumber())
+                .totalPages(result.getTotalPages())
+                .totalElements(result.getTotalElements())
+                .build();
     }
 
     private SessionSummaryDto toSummaryDto(GameSession session) {

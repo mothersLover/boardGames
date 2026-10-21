@@ -303,6 +303,118 @@ function ScoreTypesManager({ gameId }) {
   );
 }
 
+function formatSessionDate(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function GameSessionsManager({ gameId, gameName, onClose }) {
+  const [data, setData] = useState({ content: [], page: 0, totalPages: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = async (page) => {
+    setLoading(true);
+    setError("");
+    try {
+      const result = await adminApi.get(`/games/${gameId}/sessions?page=${page}&size=10`);
+      setData(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameId]);
+
+  const handleDelete = async (session) => {
+    if (!window.confirm(`Удалить партию от ${formatSessionDate(session.startedAt)}? Это необратимо.`)) return;
+    setError("");
+    try {
+      await adminApi.del(`/games/${gameId}/sessions/${session.id}`);
+      await load(data.page);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div className="admin-form-card" style={{ maxWidth: 720 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <h3 style={{ margin: 0 }}>Партии игры «{gameName}»</h3>
+        <button type="button" className="admin-btn secondary" onClick={onClose}>
+          Закрыть
+        </button>
+      </div>
+
+      {error && <div className="admin-error">{error}</div>}
+
+      {loading ? (
+        <p>Загрузка...</p>
+      ) : (
+        <>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Игроки</th>
+                <th>Победитель</th>
+                <th>Статус</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.content.length === 0 && (
+                <tr>
+                  <td colSpan={5}>Партий ещё нет</td>
+                </tr>
+              )}
+              {data.content.map((s) => (
+                <tr key={s.id}>
+                  <td>{formatSessionDate(s.startedAt)}</td>
+                  <td>{(s.playerNames || []).join(", ")}</td>
+                  <td>{s.winnerName || "-"}</td>
+                  <td>{s.isCompleted ? "Завершена" : "Активна"}</td>
+                  <td className="actions">
+                    <button type="button" className="admin-btn danger" onClick={() => handleDelete(s)}>
+                      Удалить
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {data.totalPages > 1 && (
+            <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
+              {Array.from({ length: data.totalPages }, (_, i) => i).map((i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`admin-btn ${i === data.page ? "" : "secondary"}`}
+                  onClick={() => load(i)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function AdminGames() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -317,6 +429,7 @@ export default function AdminGames() {
   const [mediaBusy, setMediaBusy] = useState(false);
   const [pendingMedia, setPendingMedia] = useState({});
   const [uploadingType, setUploadingType] = useState(null);
+  const [sessionsGame, setSessionsGame] = useState(null);
 
   const loadGames = async () => {
     setLoading(true);
@@ -566,6 +679,14 @@ export default function AdminGames() {
         </form>
       )}
 
+      {sessionsGame && (
+        <GameSessionsManager
+          gameId={sessionsGame.id}
+          gameName={sessionsGame.name}
+          onClose={() => setSessionsGame(null)}
+        />
+      )}
+
       {loading ? (
         <p>Загрузка...</p>
       ) : (
@@ -609,6 +730,9 @@ export default function AdminGames() {
                 <td className="actions">
                   <button className="admin-btn" onClick={() => startEdit(game)}>
                     Изменить
+                  </button>
+                  <button className="admin-btn secondary" onClick={() => setSessionsGame(game)}>
+                    Список партий
                   </button>
                   <button className="admin-btn danger" onClick={() => handleDelete(game)}>
                     Удалить

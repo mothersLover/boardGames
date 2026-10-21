@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ScoreTypeRepository extends CrudRepository<ScoreType, Long> {
+
+    boolean existsByGame_Id(Long gameId);
 }

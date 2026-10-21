@@ -1,3 +1,4 @@
+import { API_URL } from "../config";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Header from "./Header";
@@ -25,11 +26,11 @@ export default function ActiveSessions() {
     setLoading(true);
     setError("");
     Promise.all([
-      fetch(`http://localhost:8080/api/games/${gameId}`).then((r) => {
+      fetch(`${API_URL}/api/games/${gameId}`).then((r) => {
         if (!r.ok) throw new Error("Игра не найдена");
         return r.json();
       }),
-      fetch(`http://localhost:8080/api/sessions/active?gameId=${gameId}`).then((r) => {
+      fetch(`${API_URL}/api/sessions/active?gameId=${gameId}`).then((r) => {
         if (!r.ok) throw new Error("Не удалось загрузить сессии");
         return r.json();
       }),
@@ -44,22 +45,28 @@ export default function ActiveSessions() {
 
   if (loading) {
     return (
-      <div className="page">
-        <div className="container sessions-page">
-          <p>Загрузка...</p>
+      <>
+        <Header />
+        <div className="page">
+          <div className="container sessions-page">
+            <p>Загрузка...</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="page">
-        <div className="container sessions-page">
-          <h2>Ошибка</h2>
-          <p className="sessions-empty">{error}</p>
+      <>
+        <Header />
+        <div className="page">
+          <div className="container sessions-page">
+            <h2>Ошибка</h2>
+            <p className="sessions-empty">{error}</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
