@@ -56,3 +56,7 @@ dev.properties
 /model/dev.properties
 /app/src/test/java/ru/dynamika/lk/app/SpringAppTest.java
 /app/src/main/resources/application.yaml
+
+### Local secrets (docker compose) ###
+.env
+!.env.example

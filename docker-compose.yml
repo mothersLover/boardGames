@@ -1,0 +1,84 @@
+name: boardgames
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-boardgames}
+      POSTGRES_USER: ${POSTGRES_USER:-boardgames}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD в файле .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    # Официальные образы minio/minio с Docker Hub и quay.io убраны, поэтому по умолчанию —
+    # сборка сообщества (Coolify) из исходников MinIO RELEASE.2025-10-15. Образ можно заменить
+    # через MINIO_IMAGE в .env.
+    image: ${MINIO_IMAGE:-ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z}
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-boardgames}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Задайте MINIO_ROOT_PASSWORD (минимум 8 символов) в файле .env}
+    volumes:
+      - miniodata:/data
+    ports:
+      # Консоль MinIO доступна только с самого сервера (удалённо — через SSH-туннель).
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-boardgames}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-boardgames}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-boardgames}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: boardgame
+      # Ссылки на файлы отдаются браузеру относительными: nginx проксирует /storage на MinIO.
+      APP_MINIO_PUBLIC_URL: /storage
+      APP_ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      APP_ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Задайте ADMIN_PASSWORD в файле .env}
+      SPRING_JPA_SHOW_SQL: "false"
+      LOGGING_LEVEL_COM_FAMILY: INFO
+    healthcheck:
+      # Порт 8080 открывается, когда приложение поднялось (curl в образе нет — проверяем TCP).
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  web:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${HTTP_PORT:-80}:80"
+
+volumes:
+  pgdata:
+  miniodata:

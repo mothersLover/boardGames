@@ -1,0 +1,11 @@
+.git
+.idea
+.claude
+.vscode
+frontend
+target
+**/target
+**/node_modules
+*.log
+*.iml
+.env
